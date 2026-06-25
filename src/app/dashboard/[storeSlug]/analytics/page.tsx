@@ -220,7 +220,7 @@ export default async function AnalyticsPage({
             <div className="text-center">
               <BarChart3 className="w-8 h-8 mx-auto mb-3 text-[#cccccc]" />
               <p className="text-sm">No data yet</p>
-              <p className="text-xs sm:text-sm mt-1">Analytics will appear once you start getting traffic and orders</p>
+              <p className="text-xs sm:text-sm mt-1">Analytics will appear once you start getting traffic and orders. Thankyou!</p>
             </div>
           </div>
         ) : (
