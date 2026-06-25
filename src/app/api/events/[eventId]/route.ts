@@ -5,9 +5,11 @@ import { cookies } from "next/headers";
 // GET - Single event with posters and ticket types
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
+
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,8 +24,6 @@ export async function GET(
         },
       }
     );
-
-    const { eventId } = params;
 
     const { data, error } = await supabase
       .from("events")
@@ -54,9 +54,11 @@ export async function GET(
 // PATCH - Update event
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
+
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,7 +83,6 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { eventId } = params;
     const body = await req.json();
 
     // Verify ownership
@@ -157,9 +158,11 @@ export async function PATCH(
 // DELETE - Delete event
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  { params }: { params: Promise<{ eventId: string }> }
 ) {
   try {
+    const { eventId } = await params;
+
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -183,8 +186,6 @@ export async function DELETE(
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const { eventId } = params;
 
     // Verify ownership
     const { data: existing } = await supabase

@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { bookingId: string } }
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ bookingId: string }> }) {
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -22,7 +19,7 @@ export async function GET(
       }
     );
 
-    const { bookingId } = params;
+    const { bookingId } = await params;
 
     const { data, error } = await supabase
       .from("event_bookings")

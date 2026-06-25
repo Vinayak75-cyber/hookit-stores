@@ -5,9 +5,11 @@ import { cookies } from "next/headers";
 // PATCH - Update ticket type
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { ticketTypeId: string } }
+  { params }: { params: Promise<{ ticketTypeId: string }> }
 ) {
   try {
+    const { ticketTypeId } = await params;
+
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,7 +34,6 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { ticketTypeId } = params;
     const body = await req.json();
 
     // Verify ownership via event
@@ -95,9 +96,11 @@ export async function PATCH(
 // DELETE - Delete ticket type
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { ticketTypeId: string } }
+  { params }: { params: Promise<{ ticketTypeId: string }> }
 ) {
   try {
+    const { ticketTypeId } = await params;
+
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -121,8 +124,6 @@ export async function DELETE(
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const { ticketTypeId } = params;
 
     // Verify ownership via event
     const { data: ticketType } = await supabase
