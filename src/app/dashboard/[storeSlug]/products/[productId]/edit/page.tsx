@@ -284,7 +284,7 @@ function PricingSection({ form, setForm }: any) {
         <ChevronDown className="w-4 h-4 text-[#999999] group-open:rotate-180 transition-transform" />
       </summary>
       <div className="px-5 pb-5 border-t border-[#f0f0f0] pt-5">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
               Price <span className="text-red-500">*</span>
@@ -391,7 +391,7 @@ function FeesSection({ form, setForm }: any) {
         <ChevronDown className="w-4 h-4 text-[#999999] group-open:rotate-180 transition-transform" />
       </summary>
       <div className="px-5 pb-5 border-t border-[#f0f0f0] pt-5">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Shipping fee</label>
             <input
@@ -468,7 +468,7 @@ function InventorySection({ form, setForm }: any) {
           </button>
         </div>
         {form.track_inventory && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Quantity</label>
               <input

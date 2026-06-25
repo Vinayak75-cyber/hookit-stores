@@ -484,7 +484,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ storeSlug: 
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-[#1a1a1a] mb-2">City</label>
                 <input

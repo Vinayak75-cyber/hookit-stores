@@ -48,7 +48,6 @@ async function getAnalyticsData(storeSlug: string) {
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Get analytics data (page views)
   const { data: analytics } = await supabase
     .from("analytics")
     .select("*")
@@ -56,7 +55,6 @@ async function getAnalyticsData(storeSlug: string) {
     .gte("date", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
     .order("date", { ascending: true });
 
-  // Get ALL orders in last 30 days
   const { data: allOrders } = await supabase
     .from("orders")
     .select("id, total_amount, customer_email, created_at, payment_status")
@@ -64,13 +62,11 @@ async function getAnalyticsData(storeSlug: string) {
     .gte("created_at", thirtyDaysAgo)
     .order("created_at", { ascending: true });
 
-  // Calculate totals — count ALL orders for revenue (matches overview page)
   const totalViews = analytics?.reduce((sum, a) => sum + (a.page_views || 0), 0) || 0;
   const totalOrders = allOrders?.length || 0;
   const totalRevenue = (allOrders || []).reduce((sum, o) => sum + (o.total_amount || 0), 0);
   const uniqueCustomers = new Set(allOrders?.map((o) => o.customer_email)).size || 0;
 
-  // Build daily data from analytics table
   let dailyData = analytics?.map((a) => ({
     date: a.date,
     views: a.page_views || 0,
@@ -78,10 +74,8 @@ async function getAnalyticsData(storeSlug: string) {
     revenue: a.revenue || 0,
   })) || [];
 
-  // If no analytics data, build from ALL orders
   if (dailyData.length === 0 && allOrders && allOrders.length > 0) {
     const orderByDate: Record<string, { views: number; orders: number; revenue: number }> = {};
-    
     allOrders.forEach((order) => {
       const date = order.created_at.split("T")[0];
       if (!orderByDate[date]) {
@@ -96,7 +90,6 @@ async function getAnalyticsData(storeSlug: string) {
       .sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  // Top products by ALL orders
   const orderIds = (allOrders || []).map((o) => o.id);
   let topProducts: { name: string; quantity: number; revenue: number }[] = [];
 
@@ -178,44 +171,47 @@ export default async function AnalyticsPage({
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">Analytics</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Analytics</h1>
         <p className="text-[#888888] text-sm mt-1">
           Performance insights for {store.name}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Grid - 2 cols on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {statCards.map((stat) => (
           <div
             key={stat.title}
-            className="bg-white border border-[#e5e5e5] rounded-2xl p-5 hover:shadow-md transition-shadow"
+            className="bg-white border border-[#e5e5e5] rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow"
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                <stat.icon className="w-5 h-5" />
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
+                <stat.icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <span className={`flex items-center gap-1 text-xs font-medium ${stat.up ? "text-green-600" : "text-red-600"}`}>
+              <span className={`flex items-center gap-1 text-[10px] sm:text-xs font-medium ${stat.up ? "text-green-600" : "text-red-600"}`}>
                 {stat.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
                 {stat.change}
               </span>
             </div>
-            <p className="text-2xl font-bold text-[#1a1a1a]">{stat.value}</p>
-            <p className="text-[#888888] text-sm mt-1">{stat.title}</p>
+            <p className="text-lg sm:text-2xl font-bold text-[#1a1a1a] truncate">{stat.value}</p>
+            <p className="text-[#888888] text-xs sm:text-sm mt-1">{stat.title}</p>
           </div>
         ))}
       </div>
 
-      <div className="bg-white border border-[#e5e5e5] rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
+      {/* Revenue Chart - Scrollable on mobile */}
+      <div className="bg-white border border-[#e5e5e5] rounded-2xl p-4 sm:p-6 overflow-hidden">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-[#1a1a1a]">Revenue overview</h3>
-            <p className="text-sm text-[#888888]">Last 30 days</p>
+            <h3 className="text-base sm:text-lg font-semibold text-[#1a1a1a]">Revenue overview</h3>
+            <p className="text-xs sm:text-sm text-[#888888]">Last 30 days</p>
           </div>
-          <div className="flex items-center gap-2 text-sm text-[#888888]">
-            <Calendar className="w-4 h-4" />
-            Last 30 days
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-[#888888]">
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Last 30 days</span>
+            <span className="sm:hidden">30d</span>
           </div>
         </div>
 
@@ -223,53 +219,55 @@ export default async function AnalyticsPage({
           <div className="flex items-center justify-center h-48 text-[#888888]">
             <div className="text-center">
               <BarChart3 className="w-8 h-8 mx-auto mb-3 text-[#cccccc]" />
-              <p>No data yet</p>
-              <p className="text-sm mt-1">Analytics will appear once you start getting traffic and orders</p>
+              <p className="text-sm">No data yet</p>
+              <p className="text-xs sm:text-sm mt-1">Analytics will appear once you start getting traffic and orders</p>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-  <div className="flex items-end gap-2 h-48 px-4">
-    {dailyData.map((day, i) => {
-      const maxRevenue = Math.max(...dailyData.map((d) => d.revenue), 1);
-      const height = Math.max((day.revenue / maxRevenue) * 100, 4);
-      return (
-        <div key={i} className="flex-1 flex flex-col items-center gap-2 min-w-[40px]">
-          <div className="text-xs font-medium text-[#1a1a1a] mb-1">
-            ₹{day.revenue.toLocaleString("en-IN")}
-          </div>
-          <div
-            className="w-full max-w-[60px] bg-[#1a1a1a] rounded-t-lg transition-all hover:bg-[#333333] relative group mx-auto"
-            style={{ height: `${height}%` }}
-          >
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#1a1a1a] text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-              ₹{day.revenue.toLocaleString("en-IN")}
+            <div className="flex items-end gap-1 sm:gap-2 h-40 sm:h-48 overflow-x-auto pb-2">
+              {dailyData.map((day, i) => {
+                const maxRevenue = Math.max(...dailyData.map((d) => d.revenue), 1);
+                const height = Math.max((day.revenue / maxRevenue) * 100, 4);
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 sm:gap-2 min-w-[48px] sm:min-w-[60px]">
+                    <div className="text-[10px] sm:text-xs font-medium text-[#1a1a1a] mb-1 hidden sm:block">
+                      ₹{day.revenue.toLocaleString("en-IN")}
+                    </div>
+                    <div
+                      className="w-full max-w-[40px] sm:max-w-[60px] bg-[#1a1a1a] rounded-t-lg transition-all hover:bg-[#333333] relative group mx-auto"
+                      style={{ height: `${height}%` }}
+                    >
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#1a1a1a] text-white text-[10px] sm:text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                        ₹{day.revenue.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+                    <span className="text-[9px] sm:text-[10px] text-[#999999]">
+                      {new Date(day.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <span className="text-[10px] text-[#999999]">
-            {new Date(day.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-          </span>
-        </div>
-      );
-    })}
-  </div>
-</div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4">Daily views</h3>
+      {/* Bottom Grid - Stack on mobile, side by side on md+ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        {/* Daily Views */}
+        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-[#1a1a1a] mb-4">Daily views</h3>
           {dailyData.length === 0 ? (
             <div className="text-center py-8 text-[#888888]">
               <Eye className="w-8 h-8 mx-auto mb-3 text-[#cccccc]" />
-              <p>No view data yet</p>
+              <p className="text-sm">No view data yet</p>
             </div>
           ) : (
             <div className="space-y-3">
               {dailyData.slice(-7).map((day, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-xs text-[#999999] w-20">
+                <div key={i} className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-[10px] sm:text-xs text-[#999999] w-16 sm:w-20 shrink-0">
                     {new Date(day.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </span>
                   <div className="flex-1 h-2 bg-[#f5f5f5] rounded-full overflow-hidden">
@@ -280,7 +278,7 @@ export default async function AnalyticsPage({
                       }}
                     />
                   </div>
-                  <span className="text-xs font-medium text-[#1a1a1a] w-10 text-right">
+                  <span className="text-[10px] sm:text-xs font-medium text-[#1a1a1a] w-8 sm:w-10 text-right shrink-0">
                     {day.views}
                   </span>
                 </div>
@@ -289,11 +287,12 @@ export default async function AnalyticsPage({
           )}
         </div>
 
-        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-[#1a1a1a] mb-4">Conversion rate</h3>
-          <div className="flex items-center justify-center h-40">
+        {/* Conversion Rate */}
+        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-[#1a1a1a] mb-4">Conversion rate</h3>
+          <div className="flex items-center justify-center h-40 px-4">
             <div className="text-center">
-              <div className="relative w-32 h-32 mx-auto mb-4">
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-4">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                   <path
                     className="text-[#f5f5f5]"
@@ -312,12 +311,12 @@ export default async function AnalyticsPage({
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xl font-bold text-[#1a1a1a]">
+                  <span className="text-lg sm:text-xl font-bold text-[#1a1a1a]">
                     {stats.totalViews > 0 ? ((stats.totalOrders / stats.totalViews) * 100).toFixed(1) : "0"}%
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-[#888888]">
+              <p className="text-xs sm:text-sm text-[#888888]">
                 {stats.totalOrders} orders from {stats.totalViews} views
               </p>
             </div>
