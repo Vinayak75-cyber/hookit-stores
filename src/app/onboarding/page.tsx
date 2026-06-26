@@ -25,7 +25,7 @@ const storeTypes = [
     },
     {
       id: "events",
-      title: "Events",
+      title: "Eventss",
       description: "Sell tickets and manage event registrations",
       icon: Calendar,
       image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=600&h=400&fit=crop",
