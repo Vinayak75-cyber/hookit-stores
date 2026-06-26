@@ -50,7 +50,27 @@ export async function middleware(request: NextRequest) {
   const user = session?.user ?? null;
 
   const pathname = request.nextUrl.pathname;
+  const hostname = request.headers.get("host") || "";
+  const cleanHost = hostname.replace(/^www\./, "");
 
+  // ===== SUBDOMAIN ROUTING =====
+  const isMainDomain =
+    cleanHost === "hookit.online" ||
+    cleanHost === "localhost:3000";
+
+  // If it's a subdomain (e.g., hikari.hookit.online), rewrite to store page
+  if (!isMainDomain) {
+    const subdomain = cleanHost.replace(".hookit.online", "").split(".")[0];
+    const reservedSubdomains = ["www", "api", "admin", "dashboard", "app"];
+
+    if (subdomain && !reservedSubdomains.includes(subdomain)) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/store/${subdomain}${pathname === "/" ? "" : pathname}`;
+      return NextResponse.rewrite(url);
+    }
+  }
+
+  // ===== AUTH PROTECTION =====
   // Protect dashboard routes
   if (pathname.startsWith("/dashboard") && !user) {
     const url = request.nextUrl.clone();
@@ -71,7 +91,8 @@ export async function middleware(request: NextRequest) {
 
   // ===== ANALYTICS TRACKING =====
   // Only track storefront pages (not excluded paths, not root, not files)
-  const shouldTrack = !EXCLUDED_ANALYTICS_PATHS.some((path) => pathname.startsWith(path)) &&
+  const shouldTrack =
+    !EXCLUDED_ANALYTICS_PATHS.some((path) => pathname.startsWith(path)) &&
     pathname !== "/" &&
     !pathname.includes(".");
 
@@ -79,9 +100,8 @@ export async function middleware(request: NextRequest) {
     const pathParts = pathname.split("/").filter(Boolean);
     if (pathParts.length > 0) {
       const storeSlug = pathParts[0];
-      
+
       // Fire-and-forget analytics tracking
-      // Use absolute URL to avoid relative path issues
       const baseUrl = request.nextUrl.origin;
       fetch(`${baseUrl}/api/analytics/track`, {
         method: "POST",
