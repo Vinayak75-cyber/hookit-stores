@@ -76,19 +76,20 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const { data: store, error } = await supabase
-    .from("stores")
-    .insert({
-      user_id: user.id,
-      name: body.name,
-      slug: body.slug,
-      description: body.description,
-      category: body.category,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
+  .from("stores")
+  .insert({
+    user_id: user.id,
+    name: body.name,
+    slug: body.slug,
+    description: body.description,
+    category: body.category,
+    is_active: true,
+    subscription_plan: "starter",  // <-- ADD THIS LINE
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+  .select()
+  .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -11,6 +11,7 @@ import {
   CreditCard,
   Calendar,
   Palette,
+  Receipt,
 } from "lucide-react";
 
 export function SidebarNav({ storeSlug }: { storeSlug: string }) {
@@ -24,6 +25,7 @@ export function SidebarNav({ storeSlug }: { storeSlug: string }) {
     { label: "Store Settings", href: `/dashboard/${storeSlug}/settings`, icon: Settings },
     { label: "Payments", href: `/dashboard/${storeSlug}/payments`, icon: CreditCard },
     { label: "Theme", href: `/dashboard/${storeSlug}/theme`, icon: Palette },
+    { label: "Billing", href: `/dashboard/${storeSlug}/billing`, icon: Receipt },
   ];
 
   return (

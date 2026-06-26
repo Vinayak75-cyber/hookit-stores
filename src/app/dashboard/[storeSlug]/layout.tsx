@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import Link from "next/link";
+import Script from "next/script";
 import {
   Store,
   ChevronRight,
@@ -55,16 +55,20 @@ export default async function DashboardLayout({
   const { store } = data;
 
   return (
-    <div className="min-h-screen bg-[#f7f7f7] flex">
-      {/* MobileSidebarWrapper is a Client Component that handles ALL interactivity */}
-      <MobileSidebarWrapper storeSlug={storeSlug} storeName={store.name} />
-      
-      {/* Main Content */}
-      <main className="flex-1 lg:ml-64 w-full min-w-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          {children}
-        </div>
-      </main>
-    </div>
+    <>
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="lazyOnload"
+      />
+      <div className="min-h-screen bg-[#f7f7f7] flex">
+        <MobileSidebarWrapper storeSlug={storeSlug} storeName={store.name} />
+        
+        <main className="flex-1 lg:ml-64 w-full min-w-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+            {children}
+          </div>
+        </main>
+      </div>
+    </>
   );
 }
