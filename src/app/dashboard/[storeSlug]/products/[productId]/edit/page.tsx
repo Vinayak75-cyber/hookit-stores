@@ -855,108 +855,7 @@ function CustomFieldsSection({ customFields, setCustomFields }: any) {
   );
 }
 
-function DigitalSection({ form, setForm }: any) {
-  return (
-    <details className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden group">
-      <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-[#fafafa] transition-colors list-none">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#f5f5f5] flex items-center justify-center">
-            <Globe className="w-4 h-4 text-[#666666]" />
-          </div>
-          <h3 className="text-sm font-semibold text-[#1a1a1a]">Digital Product</h3>
-        </div>
-        <ChevronDown className="w-4 h-4 text-[#999999] group-open:rotate-180 transition-transform" />
-      </summary>
-      <div className="px-5 pb-5 border-t border-[#f0f0f0] pt-5 space-y-4">
-        <div className="flex items-center justify-between p-3 rounded-xl bg-[#f8f8f8]">
-          <span className="text-sm font-medium text-[#1a1a1a]">This is a digital product</span>
-          <button
-            type="button"
-            onClick={() => setForm((prev: any) => ({ ...prev, is_digital: !prev.is_digital }))}
-          >
-            {form.is_digital ? (
-              <ToggleRight className="w-8 h-8 text-[#1a1a1a]" />
-            ) : (
-              <ToggleLeft className="w-8 h-8 text-[#999999]" />
-            )}
-          </button>
-        </div>
-        {form.is_digital && (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Download URL</label>
-              <input
-                type="url"
-                value={form.digital_file_url}
-                onChange={(e) => setForm((prev: any) => ({ ...prev, digital_file_url: e.target.value }))}
-                placeholder="File download link"
-                className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Download limit</label>
-              <input
-                type="number"
-                value={form.digital_download_limit}
-                onChange={(e) => setForm((prev: any) => ({ ...prev, digital_download_limit: e.target.value }))}
-                placeholder="0 = unlimited"
-                className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-    </details>
-  );
-}
 
-function SeoSection({ form, setForm }: any) {
-  return (
-    <details className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden group">
-      <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-[#fafafa] transition-colors list-none">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#f5f5f5] flex items-center justify-center">
-            <Globe className="w-4 h-4 text-[#666666]" />
-          </div>
-          <h3 className="text-sm font-semibold text-[#1a1a1a]">SEO Settings</h3>
-        </div>
-        <ChevronDown className="w-4 h-4 text-[#999999] group-open:rotate-180 transition-transform" />
-      </summary>
-      <div className="px-5 pb-5 border-t border-[#f0f0f0] pt-5 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Meta title</label>
-          <input
-            type="text"
-            value={form.meta_title}
-            onChange={(e) => setForm((prev: any) => ({ ...prev, meta_title: e.target.value }))}
-            placeholder="SEO title"
-            className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Meta description</label>
-          <textarea
-            value={form.meta_description}
-            onChange={(e) => setForm((prev: any) => ({ ...prev, meta_description: e.target.value }))}
-            placeholder="SEO description"
-            rows={2}
-            className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm resize-none"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[#1a1a1a] mb-2">URL slug</label>
-          <input
-            type="text"
-            value={form.url_slug}
-            onChange={(e) => setForm((prev: any) => ({ ...prev, url_slug: e.target.value }))}
-            placeholder="product-url-slug"
-            className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm"
-          />
-        </div>
-      </div>
-    </details>
-  );
-}
 
 function VisibilitySection({ form, setForm }: any) {
   const options = ["active", "draft", "hidden"] as const;
@@ -1577,8 +1476,6 @@ export default function EditProductPage({
         <ShippingSection form={form} setForm={setForm} />
         <SpecificationsSection specifications={specifications} setSpecifications={setSpecifications} />
         <CustomFieldsSection customFields={customFields} setCustomFields={setCustomFields} />
-        <DigitalSection form={form} setForm={setForm} />
-        <SeoSection form={form} setForm={setForm} />
         <VisibilitySection form={form} setForm={setForm} />
         <PurchaseLimitsSection form={form} setForm={setForm} />
 

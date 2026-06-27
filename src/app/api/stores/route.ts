@@ -73,23 +73,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // ─── STORE LIMIT CHECK ───
+  const { count: storeCount, error: countError } = await supabase
+    .from("stores")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("is_active", true);
+
+  if (countError) {
+    console.error("Error counting stores:", countError);
+    return NextResponse.json(
+      { error: "Failed to check store limit" },
+      { status: 500 }
+    );
+  }
+
+  const maxStores = 2;
+  if (storeCount && storeCount >= maxStores) {
+    return NextResponse.json(
+      { error: "Store limit reached. Upgrade to Pro to create more stores." },
+      { status: 403 }
+    );
+  }
+
   const body = await request.json();
 
   const { data: store, error } = await supabase
-  .from("stores")
-  .insert({
-    user_id: user.id,
-    name: body.name,
-    slug: body.slug,
-    description: body.description,
-    category: body.category,
-    is_active: true,
-    subscription_plan: "starter",  // <-- ADD THIS LINE
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  })
-  .select()
-  .single();
+    .from("stores")
+    .insert({
+      user_id: user.id,
+      name: body.name,
+      slug: body.slug,
+      description: body.description,
+      category: body.category,
+      is_active: true,
+      subscription_plan: "starter",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

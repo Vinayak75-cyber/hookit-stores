@@ -46,8 +46,8 @@ async function sendOrderNotificationEmail(
     currency: string;
   }
 ) {
-  console.log("📧 Attempting to send email to:", toEmail);
-  
+  console.log("📧 Attempting to send store owner email to:", toEmail);
+
   const resendClient = getResend();
   if (!resendClient) {
     console.error("❌ RESEND_API_KEY not set or Resend not initialized");
@@ -69,7 +69,7 @@ async function sendOrderNotificationEmail(
 
   try {
     const result = await resendClient.emails.send({
-      from: "orders@hookit.online",
+      from: "Hookit <orders@hookit.online>",
       to: [toEmail],
       subject: `🛒 New Order — #${orderDetails.orderId.slice(0, 8).toUpperCase()} | ${storeName}`,
       html: `
@@ -94,13 +94,13 @@ async function sendOrderNotificationEmail(
                     <td style="padding:32px 40px;">
                       <p style="margin:0 0 8px 0;color:#666;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Order ID</p>
                       <p style="margin:0 0 24px 0;color:#1a1a1a;font-size:18px;font-weight:600;font-family:monospace;">#${orderDetails.orderId.slice(0, 8).toUpperCase()}</p>
-                      
+
                       <p style="margin:0 0 8px 0;color:#666;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Amount</p>
                       <p style="margin:0 0 24px 0;color:#1a1a1a;font-size:28px;font-weight:700;">${formattedAmount}</p>
-                      
+
                       <p style="margin:0 0 8px 0;color:#666;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Products</p>
                       <p style="margin:0 0 24px 0;color:#1a1a1a;font-size:15px;line-height:1.5;">${productList}</p>
-                      
+
                       <p style="margin:0 0 8px 0;color:#666;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Customer</p>
                       <p style="margin:0;color:#1a1a1a;font-size:15px;"><strong>${orderDetails.customerName}</strong></p>
                       <p style="margin:4px 0 0 0;color:#666;font-size:14px;">${orderDetails.customerEmail}</p>
@@ -127,9 +127,106 @@ async function sendOrderNotificationEmail(
         </html>
       `,
     });
-    console.log("✅ Email sent successfully:", result);
+    console.log("✅ Store owner email sent successfully:", result);
   } catch (err: any) {
-    console.error("❌ Failed to send email:", err.message, err);
+    console.error("❌ Failed to send store owner email:", err.message, err);
+  }
+}
+
+async function sendCustomerConfirmationEmail(
+  toEmail: string,
+  storeName: string,
+  storeSlug: string,
+  orderDetails: {
+    orderId: string;
+    customerName: string;
+    totalAmount: number;
+    productNames: string[];
+    currency: string;
+  }
+) {
+  console.log("📧 Attempting to send customer confirmation email to:", toEmail);
+
+  const resendClient = getResend();
+  if (!resendClient) {
+    console.error("❌ RESEND_API_KEY not set or Resend not initialized");
+    return;
+  }
+
+  const productList = orderDetails.productNames.join(", ");
+  const formattedAmount = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: orderDetails.currency || "INR",
+  }).format(orderDetails.totalAmount);
+
+  try {
+    const result = await resendClient.emails.send({
+      from: "Hookit <orders@hookit.online>",
+      to: [toEmail],
+      subject: `✅ Order Confirmed — #${orderDetails.orderId.slice(0, 8).toUpperCase()} | ${storeName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;padding:40px 20px;">
+            <tr>
+              <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+                  <tr>
+                    <td style="background-color:#1a1a1a;padding:32px 40px;text-align:center;">
+                      <h1 style="margin:0;color:#ffffff;font-size:20px;font-weight:600;">✅ Order Confirmed</h1>
+                      <p style="margin:8px 0 0 0;color:#a0a0a0;font-size:14px;">${storeName}</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:32px 40px;">
+                      <p style="margin:0 0 24px 0;color:#1a1a1a;font-size:15px;line-height:1.6;">Hi <strong>${orderDetails.customerName}</strong>,</p>
+                      <p style="margin:0 0 24px 0;color:#1a1a1a;font-size:15px;line-height:1.6;">Good news! The store owner has been notified about your order. You'll receive an update once your order is processed.</p>
+
+                      <p style="margin:0 0 8px 0;color:#666;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Order ID</p>
+                      <p style="margin:0 0 24px 0;color:#1a1a1a;font-size:18px;font-weight:600;font-family:monospace;">#${orderDetails.orderId.slice(0, 8).toUpperCase()}</p>
+
+                      <p style="margin:0 0 8px 0;color:#666;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Amount Paid</p>
+                      <p style="margin:0 0 24px 0;color:#1a1a1a;font-size:28px;font-weight:700;">${formattedAmount}</p>
+
+                      <p style="margin:0 0 8px 0;color:#666;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Products</p>
+                      <p style="margin:0 0 24px 0;color:#1a1a1a;font-size:15px;line-height:1.5;">${productList}</p>
+
+                      <div style="background-color:#f8f8f8;border-radius:8px;padding:20px;margin:24px 0;">
+                        <p style="margin:0 0 8px 0;color:#666;font-size:13px;">📧 What happens next?</p>
+                        <p style="margin:0;color:#1a1a1a;font-size:14px;line-height:1.6;">The store owner will review your order and prepare it for delivery. You'll receive whatsapp notification once your order is shipped or ready for pickup.</p>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 40px 32px 40px;text-align:center;">
+                      <a href="https://${storeSlug}.hookit.online" 
+                         style="display:inline-block;background-color:#1a1a1a;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:14px;font-weight:500;">
+                        Visit Store
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:24px 40px;border-top:1px solid #eee;text-align:center;">
+                      <p style="margin:0 0 4px 0;color:#999;font-size:12px;">This email was sent by Hookit on behalf of ${storeName}.</p>
+                      <p style="margin:0;color:#999;font-size:12px;">Questions? Contact the store owner directly.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `,
+    });
+    console.log("✅ Customer confirmation email sent successfully:", result);
+  } catch (err: any) {
+    console.error("❌ Failed to send customer confirmation email:", err.message, err);
   }
 }
 
@@ -234,7 +331,7 @@ export async function POST(request: NextRequest) {
         `${item.product_name} (x${item.quantity})`
       ) || [];
 
-      console.log("📧 Sending email with products:", productNames);
+      console.log("📧 Sending store owner email with products:", productNames);
 
       await sendOrderNotificationEmail(
         store.contact_email,
@@ -250,7 +347,31 @@ export async function POST(request: NextRequest) {
         }
       );
     } else {
-      console.warn("⚠️ Skipping email — contact_email missing or orderData null");
+      console.warn("⚠️ Skipping store owner email — contact_email missing or orderData null");
+    }
+
+    // 6. Send confirmation email to customer
+    if (orderData?.customer_email && orderData) {
+      const productNames = orderData.order_items?.map((item: any) => 
+        `${item.product_name} (x${item.quantity})`
+      ) || [];
+
+      console.log("📧 Sending customer confirmation email to:", orderData.customer_email);
+
+      await sendCustomerConfirmationEmail(
+        orderData.customer_email,
+        store.name,
+        store.slug,
+        {
+          orderId: order_id,
+          customerName: orderData.customer_name,
+          totalAmount: orderData.total_amount,
+          productNames,
+          currency: paymentSettings.currency || "INR",
+        }
+      );
+    } else {
+      console.warn("⚠️ Skipping customer email — customer_email missing or orderData null");
     }
 
     return NextResponse.json({

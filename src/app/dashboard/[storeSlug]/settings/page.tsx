@@ -14,6 +14,10 @@ import {
   Loader2,
   Save,
   Check,
+  Shield,
+  Truck,
+  RefreshCw,
+  FileCheck,
 } from "lucide-react";
 
 export default function StoreSettingsPage({ params }: { params: Promise<{ storeSlug: string }> }) {
@@ -21,9 +25,9 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
   const supabase = createClient();
   const [storeSlug, setStoreSlug] = useState<string>("");
 
-useEffect(() => {
-  params.then((p) => setStoreSlug(p.storeSlug));
-}, [params]);
+  useEffect(() => {
+    params.then((p) => setStoreSlug(p.storeSlug));
+  }, [params]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -40,6 +44,10 @@ useEffect(() => {
     contact_email: "",
     contact_phone: "",
     address: "",
+    shipping_policy: "",
+    refund_policy: "",
+    privacy_policy: "",
+    terms_conditions: "",
   });
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -54,11 +62,12 @@ useEffect(() => {
     const fetchStore = async () => {
       const { data: store } = await supabase
         .from("stores")
-        .select("*")
+        .select("*, store_settings(*)")
         .eq("slug", storeSlug)
         .single();
 
       if (store) {
+        const settings = store.store_settings?.[0] || {};
         setForm({
           name: store.name || "",
           description: store.description || "",
@@ -69,6 +78,10 @@ useEffect(() => {
           contact_email: store.contact_email || "",
           contact_phone: store.contact_phone || "",
           address: store.address || "",
+          shipping_policy: settings.shipping_policy || "",
+          refund_policy: settings.refund_policy || "",
+          privacy_policy: settings.privacy_policy || "",
+          terms_conditions: settings.terms_conditions || "",
         });
         setLogoPreview(store.logo_url || "");
         setBannerPreview(store.banner_url || "");
@@ -147,7 +160,8 @@ useEffect(() => {
         bannerUrl = await uploadImage(bannerFile, "banner");
       }
 
-      const { error: updateError } = await supabase
+      // Update stores table
+      const { error: storeError } = await supabase
         .from("stores")
         .update({
           name: form.name.trim(),
@@ -162,7 +176,33 @@ useEffect(() => {
         })
         .eq("slug", storeSlug);
 
-      if (updateError) throw updateError;
+      if (storeError) throw storeError;
+
+      // Get store ID for store_settings
+      const { data: storeData } = await supabase
+        .from("stores")
+        .select("id")
+        .eq("slug", storeSlug)
+        .single();
+
+      if (!storeData) throw new Error("Store not found");
+
+      // Upsert store_settings
+      const { error: settingsError } = await supabase
+        .from("store_settings")
+        .upsert(
+          {
+            store_id: storeData.id,
+            shipping_policy: form.shipping_policy.trim() || null,
+            refund_policy: form.refund_policy.trim() || null,
+            privacy_policy: form.privacy_policy.trim() || null,
+            terms_conditions: form.terms_conditions.trim() || null,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "store_id" }
+        );
+
+      if (settingsError) throw settingsError;
 
       setSuccess(true);
       setLogoFile(null);
@@ -195,7 +235,7 @@ useEffect(() => {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">Store settings</h1>
-          <p className="text-[#888888] text-sm">Manage your store information and branding</p>
+          <p className="text-[#888888] text-sm">Manage your store information and policies</p>
         </div>
       </div>
 
@@ -294,6 +334,82 @@ useEffect(() => {
                 rows={3}
                 className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm text-[#1a1a1a] placeholder-[#bbbbbb] focus:outline-none focus:border-[#1a1a1a] focus:ring-1 focus:ring-[#1a1a1a] transition-all resize-none"
               />
+            </div>
+          </div>
+
+          {/* Store Policies */}
+          <div className="bg-white border border-[#e5e5e5] rounded-2xl p-6 space-y-5">
+            <h2 className="text-lg font-semibold text-[#1a1a1a] flex items-center gap-2">
+              <Shield className="w-5 h-5 text-[#666666]" />
+              Store policies
+            </h2>
+
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-[#1a1a1a] mb-2">
+                <Truck className="w-4 h-4 text-[#999999]" />
+                Shipping policy
+              </label>
+              <textarea
+                value={form.shipping_policy}
+                onChange={(e) => handleChange("shipping_policy", e.target.value)}
+                placeholder="Describe your shipping methods, delivery times, costs, and any restrictions..."
+                rows={5}
+                className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm text-[#1a1a1a] placeholder-[#bbbbbb] focus:outline-none focus:border-[#1a1a1a] focus:ring-1 focus:ring-[#1a1a1a] transition-all resize-none"
+              />
+              <p className="text-xs text-[#999999] mt-1.5">
+                This will be displayed on your store's shipping policy page.
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-[#1a1a1a] mb-2">
+                <RefreshCw className="w-4 h-4 text-[#999999]" />
+                Refund & return policy
+              </label>
+              <textarea
+                value={form.refund_policy}
+                onChange={(e) => handleChange("refund_policy", e.target.value)}
+                placeholder="Describe your refund conditions, return window, and process..."
+                rows={5}
+                className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm text-[#1a1a1a] placeholder-[#bbbbbb] focus:outline-none focus:border-[#1a1a1a] focus:ring-1 focus:ring-[#1a1a1a] transition-all resize-none"
+              />
+              <p className="text-xs text-[#999999] mt-1.5">
+                This will be displayed on your store's refund policy page.
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-[#1a1a1a] mb-2">
+                <Shield className="w-4 h-4 text-[#999999]" />
+                Privacy policy
+              </label>
+              <textarea
+                value={form.privacy_policy}
+                onChange={(e) => handleChange("privacy_policy", e.target.value)}
+                placeholder="Describe how you collect, use, and protect customer data..."
+                rows={5}
+                className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm text-[#1a1a1a] placeholder-[#bbbbbb] focus:outline-none focus:border-[#1a1a1a] focus:ring-1 focus:ring-[#1a1a1a] transition-all resize-none"
+              />
+              <p className="text-xs text-[#999999] mt-1.5">
+                This will be displayed on your store's privacy policy page.
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center gap-2 text-sm font-medium text-[#1a1a1a] mb-2">
+                <FileCheck className="w-4 h-4 text-[#999999]" />
+                Terms & conditions
+              </label>
+              <textarea
+                value={form.terms_conditions}
+                onChange={(e) => handleChange("terms_conditions", e.target.value)}
+                placeholder="Describe the terms customers agree to when using your store..."
+                rows={5}
+                className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm text-[#1a1a1a] placeholder-[#bbbbbb] focus:outline-none focus:border-[#1a1a1a] focus:ring-1 focus:ring-[#1a1a1a] transition-all resize-none"
+              />
+              <p className="text-xs text-[#999999] mt-1.5">
+                This will be displayed on your store's terms & conditions page.
+              </p>
             </div>
           </div>
         </div>

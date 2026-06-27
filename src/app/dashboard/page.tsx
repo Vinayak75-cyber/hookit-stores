@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Plus, Store, ArrowRight, Settings, ShoppingBag } from "lucide-react";
+import { Plus, Store, ArrowRight, Settings, Crown } from "lucide-react";
 
 async function getUserStores() {
   const cookieStore = await cookies();
@@ -26,6 +26,17 @@ async function getUserStores() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // Get store count for the user
+  const { count: storeCount, error: countError } = await supabase
+    .from("stores")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("is_active", true);
+
+  if (countError) {
+    console.error("Error counting stores:", countError);
+  }
+
   const { data: stores } = await supabase
     .from("stores")
     .select("*")
@@ -33,7 +44,7 @@ async function getUserStores() {
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
-  return { user, stores: stores || [] };
+  return { user, stores: stores || [], storeCount: storeCount || 0 };
 }
 
 export default async function DashboardPage() {
@@ -43,7 +54,9 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const { stores } = data;
+  const { stores, storeCount } = data;
+  const maxStores = 2;
+  const canCreateMore = storeCount < maxStores;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -70,20 +83,43 @@ export default async function DashboardPage() {
           <p className="text-[#888888] text-lg max-w-xl mx-auto">
             Manage your online stores or create a new one.
           </p>
+          <p className="text-[#aaaaaa] text-sm mt-2">
+            {storeCount} of {maxStores} stores created
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl w-full">
           {/* Create New Store Card */}
-          <Link
-            href="/onboarding"
-            className="group border-2 border-dashed border-[#e5e5e5] rounded-2xl flex flex-col items-center justify-center text-center hover:border-[#1a1a1a] transition-colors min-h-[320px]"
-          >
-            <div className="w-12 h-12 rounded-xl bg-[#f5f5f5] flex items-center justify-center mb-4 group-hover:bg-[#1a1a1a] transition-colors">
-              <Plus className="w-5 h-5 text-[#666666] group-hover:text-white transition-colors" />
+          {canCreateMore ? (
+            <Link
+              href="/onboarding"
+              className="group border-2 border-dashed border-[#e5e5e5] rounded-2xl flex flex-col items-center justify-center text-center hover:border-[#1a1a1a] transition-colors min-h-[320px]"
+            >
+              <div className="w-12 h-12 rounded-xl bg-[#f5f5f5] flex items-center justify-center mb-4 group-hover:bg-[#1a1a1a] transition-colors">
+                <Plus className="w-5 h-5 text-[#666666] group-hover:text-white transition-colors" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#1a1a1a] mb-1">Create new store</h3>
+              <p className="text-sm text-[#888888]">Start a new business</p>
+              <p className="text-xs text-[#aaaaaa] mt-1">
+                {maxStores - storeCount} slot{maxStores - storeCount !== 1 ? "s" : ""} remaining
+              </p>
+            </Link>
+          ) : (
+            <div className="group border-2 border-dashed border-[#e5e5e5] rounded-2xl flex flex-col items-center justify-center text-center min-h-[320px] opacity-60 cursor-not-allowed">
+              <div className="w-12 h-12 rounded-xl bg-[#f5f5f5] flex items-center justify-center mb-4">
+                <Crown className="w-5 h-5 text-[#999999]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#888888] mb-1">Store limit reached</h3>
+              <p className="text-sm text-[#aaaaaa] mb-3">You've used all {maxStores} store slots</p>
+              <Link
+                href="/billing"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#c9a96e] hover:text-[#b8975d] transition-colors"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                Upgrade to Pro
+              </Link>
             </div>
-            <h3 className="text-lg font-semibold text-[#1a1a1a] mb-1">Create new store</h3>
-            <p className="text-sm text-[#888888]">Start a new business</p>
-          </Link>
+          )}
 
           {/* Store Cards */}
           {stores.map((store) => (

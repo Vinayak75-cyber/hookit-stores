@@ -449,20 +449,6 @@ export default function CartPage({ params }: { params: Promise<{ storeSlug: stri
             Clear cart
           </button>
         </div>
-
-        {/* Trust Badges */}
-        <div className="grid grid-cols-3 gap-4 mt-6">
-          {[
-            { icon: Truck, label: "Free shipping" },
-            { icon: Shield, label: "Secure payment" },
-            { icon: RotateCcw, label: "Easy returns" },
-          ].map((badge) => (
-            <div key={badge.label} className="text-center p-4 rounded-xl bg-white border border-[#e5e5e5]">
-              <badge.icon className="w-5 h-5 mx-auto mb-2 text-[#666666]" />
-              <p className="text-xs text-[#666666]">{badge.label}</p>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

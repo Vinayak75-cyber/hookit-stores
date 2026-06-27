@@ -12,6 +12,14 @@ import {
   ArrowRight,
   Tag,
   Layers,
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  Truck,
+  RefreshCw,
+  Shield,
+  FileCheck,
 } from "lucide-react";
 import { CartIcon } from "@/components/storefront/cart-icon";
 import { createClient } from "@/lib/supabase";
@@ -47,6 +55,8 @@ interface Store {
   store_settings: any;
 }
 
+type ModalType = "contact" | "shipping" | "refund" | "privacy" | "terms" | null;
+
 export default function StorefrontPage({ params }: { params: Promise<{ storeSlug: string }> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,11 +69,11 @@ export default function StorefrontPage({ params }: { params: Promise<{ storeSlug
   const [collections, setCollections] = useState<Collection[]>([]);
   const [activeCollection, setActiveCollection] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
 
   useEffect(() => {
     params.then((p) => {
       setStoreSlug(p.storeSlug);
-      // Check URL for collection param on load
       const coll = searchParams.get("collection");
       if (coll) setActiveCollection(coll);
     });
@@ -74,31 +84,28 @@ export default function StorefrontPage({ params }: { params: Promise<{ storeSlug
     fetchStoreData();
   }, [storeSlug]);
 
-  // Filter products when activeCollection changes
-useEffect(() => {
-  if (!activeCollection) {
-    setProducts(allProducts);
-    return;
-  }
-  
-  const filtered = allProducts.filter((product) =>
-    product.product_collections?.some(
-      (pc: any) => pc.collection_id === activeCollection
-    )
-  );
-  
-  setProducts(filtered);
-}, [activeCollection, allProducts]);
+  useEffect(() => {
+    if (!activeCollection) {
+      setProducts(allProducts);
+      return;
+    }
+
+    const filtered = allProducts.filter((product) =>
+      product.product_collections?.some(
+        (pc: any) => pc.collection_id === activeCollection
+      )
+    );
+
+    setProducts(filtered);
+  }, [activeCollection, allProducts]);
 
   const fetchStoreData = async () => {
     setLoading(true);
-    
-    // Fetch store
+
     const { data: storeData } = await supabase
       .from("stores")
       .select("*, theme_settings(*), store_settings(*)")
       .eq("slug", storeSlug)
-      .eq("is_active", true)
       .single();
 
     if (!storeData) {
@@ -106,9 +113,14 @@ useEffect(() => {
       return;
     }
 
+    // Check if store is deactivated
+    if (!storeData.is_active) {
+      router.push(`/store-disabled?store=${encodeURIComponent(storeData.name)}`);
+      return;
+    }
+
     setStore(storeData);
 
-    // Fetch all products
     const { data: productsData, error: productsError } = await supabase
       .from("products")
       .select(`
@@ -124,7 +136,6 @@ useEffect(() => {
       console.error("Products fetch error:", productsError);
     }
 
-    // Fetch collection_products separately (no store_id column)
     const { data: collectionProductsData, error: cpError } = await supabase
       .from("collection_products")
       .select("*");
@@ -133,7 +144,6 @@ useEffect(() => {
       console.error("Collection products fetch error:", cpError);
     }
 
-    // Merge collection_products into products manually
     const prods = (productsData || []).map((product: any) => ({
       ...product,
       product_collections: (collectionProductsData || []).filter(
@@ -144,7 +154,6 @@ useEffect(() => {
     setAllProducts(prods);
     setProducts(prods);
 
-    // Fetch collections
     const { data: collectionsData } = await supabase
       .from("collections")
       .select("*")
@@ -155,16 +164,155 @@ useEffect(() => {
     setLoading(false);
   };
 
-  // Filter products when collection changes
   const handleCollectionClick = (collectionId: string | null) => {
-  if (!collectionId) {
-    router.push(`/${storeSlug}`);
-    setActiveCollection(null);
-    return;
-  }
-  router.push(`/${storeSlug}?collection=${collectionId}`);
-  setActiveCollection(collectionId);
-};
+    if (!collectionId) {
+      router.push(`/${storeSlug}`);
+      setActiveCollection(null);
+      return;
+    }
+    router.push(`/${storeSlug}?collection=${collectionId}`);
+    setActiveCollection(collectionId);
+  };
+
+  const openModal = (modal: ModalType) => {
+    setActiveModal(modal);
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+    document.body.style.overflow = "";
+  };
+
+  // Close modal on Escape key
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeModal();
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  // Get store settings
+  const storeSettings = store?.store_settings || {};
+
+  const modalContent = {
+    contact: {
+      title: "Contact Us",
+      icon: <Mail className="w-5 h-5" />,
+      content: (
+        <div className="space-y-6">
+          <p className="text-[#666666] text-sm leading-relaxed">
+            Have questions? We'd love to hear from you. Reach out using the details below.
+          </p>
+          {store?.contact_email && (
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-[#f8f8f8]">
+              <Mail className="w-5 h-5 text-[#999999] mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-[#999999] uppercase tracking-wide font-medium">Email</p>
+                <a
+                  href={`mailto:${store.contact_email}`}
+                  className="text-sm text-[#1a1a1a] font-medium hover:underline"
+                >
+                  {store.contact_email}
+                </a>
+              </div>
+            </div>
+          )}
+          {store?.contact_phone && (
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-[#f8f8f8]">
+              <Phone className="w-5 h-5 text-[#999999] mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-[#999999] uppercase tracking-wide font-medium">Phone</p>
+                <a
+                  href={`tel:${store.contact_phone}`}
+                  className="text-sm text-[#1a1a1a] font-medium hover:underline"
+                >
+                  {store.contact_phone}
+                </a>
+              </div>
+            </div>
+          )}
+          {store?.address && (
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-[#f8f8f8]">
+              <MapPin className="w-5 h-5 text-[#999999] mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs text-[#999999] uppercase tracking-wide font-medium">Address</p>
+                <p className="text-sm text-[#1a1a1a] font-medium whitespace-pre-line">
+                  {store.address}
+                </p>
+              </div>
+            </div>
+          )}
+          {!store?.contact_email && !store?.contact_phone && !store?.address && (
+            <p className="text-sm text-[#999999] text-center py-8">
+              No contact information available.
+            </p>
+          )}
+        </div>
+      ),
+    },
+    shipping: {
+      title: "Shipping Policy",
+      icon: <Truck className="w-5 h-5" />,
+      content: storeSettings.shipping_policy ? (
+        <div className="prose prose-sm max-w-none">
+          <div className="text-[#1a1a1a] text-sm leading-relaxed whitespace-pre-line">
+            {storeSettings.shipping_policy}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-[#999999] text-center py-8">
+          Shipping policy information coming soon.
+        </p>
+      ),
+    },
+    refund: {
+      title: "Refund & Return Policy",
+      icon: <RefreshCw className="w-5 h-5" />,
+      content: storeSettings.refund_policy ? (
+        <div className="prose prose-sm max-w-none">
+          <div className="text-[#1a1a1a] text-sm leading-relaxed whitespace-pre-line">
+            {storeSettings.refund_policy}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-[#999999] text-center py-8">
+          Refund policy information coming soon.
+        </p>
+      ),
+    },
+    privacy: {
+      title: "Privacy Policy",
+      icon: <Shield className="w-5 h-5" />,
+      content: storeSettings.privacy_policy ? (
+        <div className="prose prose-sm max-w-none">
+          <div className="text-[#1a1a1a] text-sm leading-relaxed whitespace-pre-line">
+            {storeSettings.privacy_policy}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-[#999999] text-center py-8">
+          Privacy policy information coming soon.
+        </p>
+      ),
+    },
+    terms: {
+      title: "Terms & Conditions",
+      icon: <FileCheck className="w-5 h-5" />,
+      content: storeSettings.terms_conditions ? (
+        <div className="prose prose-sm max-w-none">
+          <div className="text-[#1a1a1a] text-sm leading-relaxed whitespace-pre-line">
+            {storeSettings.terms_conditions}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-[#999999] text-center py-8">
+          Terms & conditions information coming soon.
+        </p>
+      ),
+    },
+  };
 
   if (loading || !store) {
     return (
@@ -505,6 +653,49 @@ const discountPercent = hasDiscount && product.compare_at_price
       {/* Footer */}
       <footer className="border-t border-[#e5e5e5] mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+          {/* Quick Links */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+            <button
+              onClick={() => openModal("contact")}
+              className="flex items-center gap-1.5 text-sm text-[#666666] hover:text-[#1a1a1a] transition-colors px-3 py-1.5 rounded-full hover:bg-[#f5f5f5]"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              Contact
+            </button>
+            <span className="text-[#e5e5e5]">|</span>
+            <button
+              onClick={() => openModal("shipping")}
+              className="flex items-center gap-1.5 text-sm text-[#666666] hover:text-[#1a1a1a] transition-colors px-3 py-1.5 rounded-full hover:bg-[#f5f5f5]"
+            >
+              <Truck className="w-3.5 h-3.5" />
+              Shipping
+            </button>
+            <span className="text-[#e5e5e5]">|</span>
+            <button
+              onClick={() => openModal("refund")}
+              className="flex items-center gap-1.5 text-sm text-[#666666] hover:text-[#1a1a1a] transition-colors px-3 py-1.5 rounded-full hover:bg-[#f5f5f5]"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Refund
+            </button>
+            <span className="text-[#e5e5e5]">|</span>
+            <button
+              onClick={() => openModal("privacy")}
+              className="flex items-center gap-1.5 text-sm text-[#666666] hover:text-[#1a1a1a] transition-colors px-3 py-1.5 rounded-full hover:bg-[#f5f5f5]"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              Privacy
+            </button>
+            <span className="text-[#e5e5e5]">|</span>
+            <button
+              onClick={() => openModal("terms")}
+              className="flex items-center gap-1.5 text-sm text-[#666666] hover:text-[#1a1a1a] transition-colors px-3 py-1.5 rounded-full hover:bg-[#f5f5f5]"
+            >
+              <FileCheck className="w-3.5 h-3.5" />
+              Terms
+            </button>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <p className="text-[10px] text-[#999999]">
               © {new Date().getFullYear()} {store.name}. All rights reserved.
@@ -522,6 +713,51 @@ const discountPercent = hasDiscount && product.compare_at_price
           </div>
         </div>
       </footer>
+
+      {/* Modal */}
+      {activeModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          onClick={closeModal}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+          {/* Modal Content */}
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e5e5]">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${theme.primary_color}10` }}
+                >
+                  <span style={{ color: theme.primary_color }}>
+                    {modalContent[activeModal].icon}
+                  </span>
+                </div>
+                <h3 className="text-base font-semibold text-[#1a1a1a]">
+                  {modalContent[activeModal].title}
+                </h3>
+              </div>
+              <button
+                onClick={closeModal}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#f5f5f5] transition-colors"
+              >
+                <X className="w-4 h-4 text-[#666666]" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-5 overflow-y-auto max-h-[60vh]">
+              {modalContent[activeModal].content}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

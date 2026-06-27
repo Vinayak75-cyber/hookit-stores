@@ -13,6 +13,7 @@ import {
   FileText,
   Tag,
   Boxes,
+  Lock,
   Loader2,
   ImageIcon,
   ChevronDown,
@@ -806,7 +807,7 @@ function CustomFieldsSection({ customFields, setCustomFields }: any) {
 
 function DigitalSection({ form, setForm }: any) {
   return (
-    <details className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden group">
+    <details className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden group relative">
       <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-[#fafafa] transition-colors list-none">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#f5f5f5] flex items-center justify-center">
@@ -855,13 +856,22 @@ function DigitalSection({ form, setForm }: any) {
           </div>
         )}
       </div>
+
+      {/* Upgrade to Pro Overlay */}
+      <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 z-10">
+        <div className="w-12 h-12 rounded-2xl bg-[#1a1a1a] flex items-center justify-center">
+          <Lock className="w-5 h-5 text-white" />
+        </div>
+        <p className="text-sm font-semibold text-[#1a1a1a]">Upgrade to Pro</p>
+        <p className="text-xs text-[#999999]">Unlock digital products</p>
+      </div>
     </details>
   );
 }
 
 function SeoSection({ form, setForm }: any) {
   return (
-    <details className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden group">
+    <details className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden group relative">
       <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-[#fafafa] transition-colors list-none">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#f5f5f5] flex items-center justify-center">
@@ -902,6 +912,15 @@ function SeoSection({ form, setForm }: any) {
             className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm"
           />
         </div>
+      </div>
+
+      {/* Upgrade to Pro Overlay */}
+      <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 z-10">
+        <div className="w-12 h-12 rounded-2xl bg-[#1a1a1a] flex items-center justify-center">
+          <Lock className="w-5 h-5 text-white" />
+        </div>
+        <p className="text-sm font-semibold text-[#1a1a1a]">Upgrade to Pro</p>
+        <p className="text-xs text-[#999999]">Unlock SEO settings</p>
       </div>
     </details>
   );
