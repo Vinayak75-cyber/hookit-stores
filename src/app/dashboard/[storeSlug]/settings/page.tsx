@@ -19,6 +19,7 @@ import {
   RefreshCw,
   FileCheck,
 } from "lucide-react";
+import imageCompression from "browser-image-compression";
 
 export default function StoreSettingsPage({ params }: { params: Promise<{ storeSlug: string }> }) {
   const router = useRouter();
@@ -33,6 +34,10 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Upload states
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -97,20 +102,90 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
     setSuccess(false);
   };
 
-  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
-    setSuccess(false);
+  // Compress image before upload
+  const compressImage = async (file: File, type: "logo" | "banner"): Promise<File> => {
+    const options = {
+      logo: {
+        maxWidthOrHeight: 400,
+        maxSizeMB: 0.5,
+        useWebWorker: true,
+        fileType: "image/webp",
+      },
+      banner: {
+        maxWidthOrHeight: 1920,
+        maxSizeMB: 1,
+        useWebWorker: true,
+        fileType: "image/webp",
+      },
+    }[type];
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      return compressedFile;
+    } catch (err) {
+      console.error("Compression failed, using original:", err);
+      return file;
+    }
   };
 
-  const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setBannerFile(file);
-    setBannerPreview(URL.createObjectURL(file));
+
+    // Validate
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File too large. Max 10MB");
+      return;
+    }
+
+    setError("");
     setSuccess(false);
+    setUploadingLogo(true);
+
+    try {
+      // Compress in browser
+      const compressedFile = await compressImage(file, "logo");
+      setLogoFile(compressedFile);
+      setLogoPreview(URL.createObjectURL(compressedFile));
+    } catch (err: any) {
+      setError(err.message || "Failed to process logo");
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleBannerSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate
+    if (!file.type.startsWith("image/")) {
+      setError("Please upload an image file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("File too large. Max 10MB");
+      return;
+    }
+
+    setError("");
+    setSuccess(false);
+    setUploadingBanner(true);
+
+    try {
+      // Compress in browser
+      const compressedFile = await compressImage(file, "banner");
+      setBannerFile(compressedFile);
+      setBannerPreview(URL.createObjectURL(compressedFile));
+    } catch (err: any) {
+      setError(err.message || "Failed to process banner");
+    } finally {
+      setUploadingBanner(false);
+    }
   };
 
   const removeLogo = () => {
@@ -126,7 +201,7 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
   };
 
   const uploadImage = async (file: File, type: "logo" | "banner"): Promise<string> => {
-    const fileName = `${storeSlug}/${type}/${Date.now()}-${file.name}`;
+    const fileName = `${storeSlug}/${type}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.webp`;
     const formData = new FormData();
     formData.append("file", file);
     formData.append("fileName", fileName);
@@ -136,7 +211,10 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
       body: formData,
     });
 
-    if (!res.ok) throw new Error(`${type} upload failed`);
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || `${type} upload failed`);
+    }
     const { url } = await res.json();
     return url;
   };
@@ -459,12 +537,19 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
               </div>
             ) : (
               <label className="block w-24 h-24 rounded-2xl border-2 border-dashed border-[#e5e5e5] hover:border-[#1a1a1a] transition-colors cursor-pointer flex flex-col items-center justify-center gap-1">
-                <Upload className="w-5 h-5 text-[#999999]" />
-                <span className="text-[10px] text-[#999999]">Upload</span>
+                {uploadingLogo ? (
+                  <Loader2 className="w-5 h-5 text-[#999999] animate-spin" />
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 text-[#999999]" />
+                    <span className="text-[10px] text-[#999999]">Upload</span>
+                  </>
+                )}
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleLogoSelect}
+                  disabled={uploadingLogo}
                   className="hidden"
                 />
               </label>
@@ -498,12 +583,19 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
               </div>
             ) : (
               <label className="block w-full h-32 rounded-2xl border-2 border-dashed border-[#e5e5e5] hover:border-[#1a1a1a] transition-colors cursor-pointer flex flex-col items-center justify-center gap-2">
-                <Image className="w-6 h-6 text-[#999999]" />
-                <span className="text-sm text-[#999999]">Upload banner</span>
+                {uploadingBanner ? (
+                  <Loader2 className="w-6 h-6 text-[#999999] animate-spin" />
+                ) : (
+                  <>
+                    <Image className="w-6 h-6 text-[#999999]" />
+                    <span className="text-sm text-[#999999]">Upload banner</span>
+                  </>
+                )}
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleBannerSelect}
+                  disabled={uploadingBanner}
                   className="hidden"
                 />
               </label>
@@ -531,7 +623,7 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
           {/* Submit */}
           <button
             type="submit"
-            disabled={saving || !storeSlug}
+            disabled={saving || !storeSlug || uploadingLogo || uploadingBanner}
             className="w-full bg-[#1a1a1a] text-white font-semibold py-3.5 rounded-xl hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {saving ? (

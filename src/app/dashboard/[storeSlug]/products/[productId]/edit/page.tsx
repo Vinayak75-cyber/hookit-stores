@@ -1196,8 +1196,18 @@ export default function EditProductPage({
     (files: FileList | null) => {
       if (!files) return;
       const newFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+      if (newFiles.length === 0) {
+        setError("Please upload image files only");
+        return;
+      }
       if (newFiles.length + images.length + existingImages.length > 10) {
         setError("Maximum 10 images allowed");
+        return;
+      }
+      // Validate size
+      const oversized = newFiles.find((f) => f.size > 10 * 1024 * 1024);
+      if (oversized) {
+        setError("One or more images exceed 10MB");
         return;
       }
       setImages((prev) => [...prev, ...newFiles]);
@@ -1219,13 +1229,35 @@ export default function EditProductPage({
     setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
   };
 
+  const compressImage = async (file: File): Promise<File> => {
+    try {
+      const imageCompression = (await import("browser-image-compression")).default;
+      return await imageCompression(file, {
+        maxWidthOrHeight: 1200,
+        maxSizeMB: 1,
+        useWebWorker: true,
+        fileType: "image/webp",
+      });
+    } catch {
+      return file;
+    }
+  };
+
   const uploadImagesToR2 = async (pid: string): Promise<string[]> => {
     const uploadedUrls: string[] = [];
     for (let i = 0; i < images.length; i++) {
       const file = images[i];
-      const fileName = `${storeSlug}/${pid}/${Date.now()}-${i}.${file.name.split(".").pop()}`;
+      
+      // Validate
+      if (!file.type.startsWith("image/")) continue;
+      if (file.size > 10 * 1024 * 1024) throw new Error("Image too large. Max 10MB");
+
+      // Compress in browser
+      const compressedFile = await compressImage(file);
+      
+      const fileName = `${storeSlug}/${pid}/${Date.now()}-${i}.webp`;
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", compressedFile);
       fd.append("fileName", fileName);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       if (!res.ok) throw new Error("Upload failed");

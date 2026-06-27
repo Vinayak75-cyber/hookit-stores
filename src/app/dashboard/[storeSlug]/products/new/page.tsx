@@ -1119,8 +1119,18 @@ export default function AddProductPage({ params }: { params: Promise<{ storeSlug
   const handleImageSelect = useCallback((files: FileList | null) => {
     if (!files) return;
     const newFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    if (newFiles.length === 0) {
+      setError("Please upload image files only");
+      return;
+    }
     if (newFiles.length + images.length > 10) {
       setError("Maximum 10 images allowed");
+      return;
+    }
+    // Validate size
+    const oversized = newFiles.find((f) => f.size > 10 * 1024 * 1024);
+    if (oversized) {
+      setError("One or more images exceed 10MB");
       return;
     }
     setImages((prev) => [...prev, ...newFiles]);
@@ -1128,21 +1138,44 @@ export default function AddProductPage({ params }: { params: Promise<{ storeSlug
     setImagePreviews((prev) => [...prev, ...newPreviews]);
     setError("");
   }, [images.length]);
-
+  
   const removeImage = (index: number) => {
     setImages((prev) => prev.filter((_, i) => i !== index));
     URL.revokeObjectURL(imagePreviews[index]);
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const compressImage = async (file: File): Promise<File> => {
+    try {
+      const imageCompression = (await import("browser-image-compression")).default;
+      return await imageCompression(file, {
+        maxWidthOrHeight: 1200,
+        maxSizeMB: 1,
+        useWebWorker: true,
+        fileType: "image/webp",
+      });
+    } catch {
+      return file;
+    }
+  };
+
   const uploadImagesToR2 = async (productId: string): Promise<string[]> => {
     const uploadedUrls: string[] = [];
     for (let i = 0; i < images.length; i++) {
       const file = images[i];
-      const fileName = `${storeSlug}/${productId}/${Date.now()}-${i}.${file.name.split(".").pop()}`;
+      
+      // Validate
+      if (!file.type.startsWith("image/")) continue;
+      if (file.size > 10 * 1024 * 1024) throw new Error("Image too large. Max 10MB");
+
+      // Compress in browser
+      const compressedFile = await compressImage(file);
+      
+      const fileName = `${storeSlug}/${productId}/${Date.now()}-${i}.webp`;
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", compressedFile);
       formData.append("fileName", fileName);
+      
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Upload failed");
       const { url } = await res.json();
