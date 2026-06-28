@@ -153,7 +153,7 @@ export default function PaymentSettingsPage({ params }: { params: Promise<{ stor
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 pt-3">
         <button
           onClick={() => router.back()}
           className="p-2 rounded-xl border border-[#e5e5e5] hover:border-[#1a1a1a] transition-colors"

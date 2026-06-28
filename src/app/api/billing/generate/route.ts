@@ -108,8 +108,8 @@ export async function GET(request: NextRequest) {
 
       totalAmount = Math.round(totalCommission * 100) / 100;
     } else if (store.subscription_plan === "growth") {
-      subscriptionAmount = 299;
-      totalAmount = 299;
+      subscriptionAmount = 999;
+      totalAmount = 999;
     } else if (store.subscription_plan === "pro") {
       skipped++;
       continue;

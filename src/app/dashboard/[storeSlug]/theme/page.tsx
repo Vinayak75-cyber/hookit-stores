@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 import {
   ArrowLeft,
   Palette,
   Type,
   Layout,
-  Image,
   Monitor,
   Smartphone,
   Save,
@@ -16,7 +16,6 @@ import {
   Check,
   Eye,
   Undo,
-  RefreshCw,
 } from "lucide-react";
 
 interface ThemeSettings {
@@ -62,7 +61,7 @@ const borderRadiusOptions = [
   { value: "8px", label: "Small" },
   { value: "12px", label: "Medium" },
   { value: "16px", label: "Large" },
-  { value: "24px", label: "Extra Large" },
+  { value: "24px", label: "XL" },
 ];
 
 const bannerHeightOptions = [
@@ -77,9 +76,9 @@ export default function ThemeEditorPage({ params }: { params: Promise<{ storeSlu
   const supabase = createClient();
   const [storeSlug, setStoreSlug] = useState<string>("");
 
-useEffect(() => {
-  params.then((p) => setStoreSlug(p.storeSlug));
-}, [params]);
+  useEffect(() => {
+    params.then((p) => setStoreSlug(p.storeSlug));
+  }, [params]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -90,7 +89,6 @@ useEffect(() => {
 
   const [theme, setTheme] = useState<ThemeSettings>(defaultTheme);
 
-  // Fetch theme settings
   useEffect(() => {
     if (!storeSlug) return;
 
@@ -192,151 +190,97 @@ useEffect(() => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => router.back()}
-            className="p-2 rounded-xl border border-[#e5e5e5] hover:border-[#1a1a1a] transition-colors"
+            className="p-2 rounded-xl border border-[#e5e5e5] hover:border-[#1a1a1a] transition-colors shrink-0"
           >
             <ArrowLeft className="w-4 h-4 text-[#666666]" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">Theme editor</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Theme editor</h1>
             <p className="text-[#888888] text-sm">Customize your store appearance</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/${storeSlug}`}
-            target="_blank"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5e5e5] text-sm text-[#666666] hover:border-[#1a1a1a] hover:text-[#1a1a1a] transition-colors"
-          >
-            <Eye className="w-4 h-4" />
-            Preview
-          </Link>
-        </div>
+        <Link
+          href={`/${storeSlug}`}
+          target="_blank"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5e5e5] text-sm text-[#666666] hover:border-[#1a1a1a] hover:text-[#1a1a1a] transition-colors self-start sm:self-auto"
+        >
+          <Eye className="w-4 h-4" />
+          Preview
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-[calc(100vh-200px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 lg:h-[calc(100vh-200px)]">
         {/* Left Sidebar - Editor */}
         <div className="lg:col-span-2 bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden flex flex-col">
           {/* Tabs */}
           <div className="flex border-b border-[#e5e5e5]">
             {[
               { key: "colors" as const, label: "Colors", icon: Palette },
-              { key: "typography" as const, label: "Typography", icon: Type },
+              { key: "typography" as const, label: "Type", icon: Type },
               { key: "layout" as const, label: "Layout", icon: Layout },
             ].map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-all ${
+                className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-3 text-xs sm:text-sm font-medium transition-all ${
                   activeTab === tab.key
                     ? "text-[#1a1a1a] border-b-2 border-[#1a1a1a]"
                     : "text-[#999999] hover:text-[#666666]"
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.slice(0, 4)}</span>
               </button>
             ))}
           </div>
 
           {/* Editor Content */}
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6">
             {activeTab === "colors" && (
-              <div className="space-y-5">
-                <h3 className="text-sm font-semibold text-[#1a1a1a] uppercase tracking-wider">
+              <div className="space-y-4 sm:space-y-5">
+                <h3 className="text-xs sm:text-sm font-semibold text-[#1a1a1a] uppercase tracking-wider">
                   Colors
                 </h3>
 
-                <div>
-                  <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                    Primary color
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={theme.primary_color}
-                      onChange={(e) => handleChange("primary_color", e.target.value)}
-                      className="w-10 h-10 rounded-xl border border-[#e5e5e5] cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={theme.primary_color}
-                      onChange={(e) => handleChange("primary_color", e.target.value)}
-                      className="flex-1 border border-[#e5e5e5] rounded-xl py-2.5 px-4 text-sm font-mono text-[#1a1a1a] focus:outline-none focus:border-[#1a1a1a] transition-all"
-                    />
+                {[
+                  { field: "primary_color" as const, label: "Primary color" },
+                  { field: "background_color" as const, label: "Background color" },
+                  { field: "text_color" as const, label: "Text color" },
+                  { field: "accent_color" as const, label: "Accent color" },
+                ].map(({ field, label }) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
+                      {label}
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={theme[field]}
+                        onChange={(e) => handleChange(field, e.target.value)}
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl border border-[#e5e5e5] cursor-pointer shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={theme[field]}
+                        onChange={(e) => handleChange(field, e.target.value)}
+                        className="flex-1 border border-[#e5e5e5] rounded-xl py-2 sm:py-2.5 px-3 sm:px-4 text-sm font-mono text-[#1a1a1a] focus:outline-none focus:border-[#1a1a1a] transition-all"
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                    Background color
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={theme.background_color}
-                      onChange={(e) => handleChange("background_color", e.target.value)}
-                      className="w-10 h-10 rounded-xl border border-[#e5e5e5] cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={theme.background_color}
-                      onChange={(e) => handleChange("background_color", e.target.value)}
-                      className="flex-1 border border-[#e5e5e5] rounded-xl py-2.5 px-4 text-sm font-mono text-[#1a1a1a] focus:outline-none focus:border-[#1a1a1a] transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                    Text color
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={theme.text_color}
-                      onChange={(e) => handleChange("text_color", e.target.value)}
-                      className="w-10 h-10 rounded-xl border border-[#e5e5e5] cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={theme.text_color}
-                      onChange={(e) => handleChange("text_color", e.target.value)}
-                      className="flex-1 border border-[#e5e5e5] rounded-xl py-2.5 px-4 text-sm font-mono text-[#1a1a1a] focus:outline-none focus:border-[#1a1a1a] transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                    Accent color
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={theme.accent_color}
-                      onChange={(e) => handleChange("accent_color", e.target.value)}
-                      className="w-10 h-10 rounded-xl border border-[#e5e5e5] cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={theme.accent_color}
-                      onChange={(e) => handleChange("accent_color", e.target.value)}
-                      className="flex-1 border border-[#e5e5e5] rounded-xl py-2.5 px-4 text-sm font-mono text-[#1a1a1a] focus:outline-none focus:border-[#1a1a1a] transition-all"
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
             )}
 
             {activeTab === "typography" && (
-              <div className="space-y-5">
-                <h3 className="text-sm font-semibold text-[#1a1a1a] uppercase tracking-wider">
+              <div className="space-y-4 sm:space-y-5">
+                <h3 className="text-xs sm:text-sm font-semibold text-[#1a1a1a] uppercase tracking-wider">
                   Typography
                 </h3>
 
@@ -347,7 +291,7 @@ useEffect(() => {
                   <select
                     value={theme.font_family}
                     onChange={(e) => handleChange("font_family", e.target.value)}
-                    className="w-full border border-[#e5e5e5] rounded-xl py-3 px-4 text-sm text-[#1a1a1a] focus:outline-none focus:border-[#1a1a1a] transition-all appearance-none bg-white"
+                    className="w-full border border-[#e5e5e5] rounded-xl py-2.5 sm:py-3 px-3 sm:px-4 text-sm text-[#1a1a1a] focus:outline-none focus:border-[#1a1a1a] transition-all appearance-none bg-white"
                   >
                     {fontOptions.map((font) => (
                       <option key={font.value} value={font.value}>
@@ -367,7 +311,7 @@ useEffect(() => {
                         key={option.value}
                         type="button"
                         onClick={() => handleChange("border_radius", option.value)}
-                        className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                        className={`py-2 px-1 sm:px-3 rounded-lg text-xs font-medium transition-all ${
                           theme.border_radius === option.value
                             ? "bg-[#1a1a1a] text-white"
                             : "bg-[#f5f5f5] text-[#666666] hover:bg-[#e5e5e5]"
@@ -382,50 +326,36 @@ useEffect(() => {
             )}
 
             {activeTab === "layout" && (
-              <div className="space-y-5">
-                <h3 className="text-sm font-semibold text-[#1a1a1a] uppercase tracking-wider">
+              <div className="space-y-4 sm:space-y-5">
+                <h3 className="text-xs sm:text-sm font-semibold text-[#1a1a1a] uppercase tracking-wider">
                   Layout
                 </h3>
 
-                <div className="flex items-center justify-between p-4 rounded-xl border border-[#e5e5e5]">
-                  <div>
-                    <p className="text-sm font-medium text-[#1a1a1a]">Show logo</p>
-                    <p className="text-xs text-[#888888]">Display store logo in header</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleChange("show_logo", !theme.show_logo)}
-                    className={`w-12 h-6 rounded-full transition-all ${
-                      theme.show_logo ? "bg-[#1a1a1a]" : "bg-[#e5e5e5]"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full bg-white shadow-sm transition-all ${
-                        theme.show_logo ? "translate-x-6" : "translate-x-0.5"
+                {[
+                  { field: "show_logo" as const, label: "Show logo", desc: "Display store logo in header" },
+                  { field: "show_banner" as const, label: "Show banner", desc: "Display banner on store homepage" },
+                  { field: "show_search" as const, label: "Show search", desc: "Display search bar in header" },
+                ].map(({ field, label, desc }) => (
+                  <div key={field} className="flex items-center justify-between p-3 sm:p-4 rounded-xl border border-[#e5e5e5]">
+                    <div className="min-w-0 pr-3">
+                      <p className="text-sm font-medium text-[#1a1a1a]">{label}</p>
+                      <p className="text-xs text-[#888888]">{desc}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleChange(field, !theme[field])}
+                      className={`w-11 h-6 sm:w-12 sm:h-6 rounded-full transition-all shrink-0 ${
+                        theme[field] ? "bg-[#1a1a1a]" : "bg-[#e5e5e5]"
                       }`}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border border-[#e5e5e5]">
-                  <div>
-                    <p className="text-sm font-medium text-[#1a1a1a]">Show banner</p>
-                    <p className="text-xs text-[#888888]">Display banner on store homepage</p>
+                    >
+                      <div
+                        className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white shadow-sm transition-all ${
+                          theme[field] ? "translate-x-5 sm:translate-x-6" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleChange("show_banner", !theme.show_banner)}
-                    className={`w-12 h-6 rounded-full transition-all ${
-                      theme.show_banner ? "bg-[#1a1a1a]" : "bg-[#e5e5e5]"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full bg-white shadow-sm transition-all ${
-                        theme.show_banner ? "translate-x-6" : "translate-x-0.5"
-                      }`}
-                    />
-                  </button>
-                </div>
+                ))}
 
                 {theme.show_banner && (
                   <div>
@@ -438,7 +368,7 @@ useEffect(() => {
                           key={option.value}
                           type="button"
                           onClick={() => handleChange("banner_height", option.value)}
-                          className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                          className={`py-2 px-1 sm:px-3 rounded-lg text-xs font-medium transition-all ${
                             theme.banner_height === option.value
                               ? "bg-[#1a1a1a] text-white"
                               : "bg-[#f5f5f5] text-[#666666] hover:bg-[#e5e5e5]"
@@ -461,7 +391,7 @@ useEffect(() => {
                         key={cols}
                         type="button"
                         onClick={() => handleChange("product_grid_columns", cols)}
-                        className={`py-2 px-3 rounded-lg text-xs font-medium transition-all ${
+                        className={`py-2 px-1 sm:px-3 rounded-lg text-xs font-medium transition-all ${
                           theme.product_grid_columns === cols
                             ? "bg-[#1a1a1a] text-white"
                             : "bg-[#f5f5f5] text-[#666666] hover:bg-[#e5e5e5]"
@@ -472,52 +402,32 @@ useEffect(() => {
                     ))}
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border border-[#e5e5e5]">
-                  <div>
-                    <p className="text-sm font-medium text-[#1a1a1a]">Show search</p>
-                    <p className="text-xs text-[#888888]">Display search bar in header</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleChange("show_search", !theme.show_search)}
-                    className={`w-12 h-6 rounded-full transition-all ${
-                      theme.show_search ? "bg-[#1a1a1a]" : "bg-[#e5e5e5]"
-                    }`}
-                  >
-                    <div
-                      className={`w-5 h-5 rounded-full bg-white shadow-sm transition-all ${
-                        theme.show_search ? "translate-x-6" : "translate-x-0.5"
-                      }`}
-                    />
-                  </button>
-                </div>
               </div>
             )}
 
             {/* Error & Success */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4 text-red-600 text-sm">
                 {error}
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-600 text-sm flex items-center gap-2">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4 text-green-600 text-sm flex items-center gap-2">
                 <Check className="w-4 h-4" />
                 Theme saved successfully
               </div>
             )}
 
             {/* Actions */}
-            <div className="flex items-center gap-3 pt-4 border-t border-[#e5e5e5]">
+            <div className="flex items-center gap-3 pt-3 sm:pt-4 border-t border-[#e5e5e5]">
               <button
                 type="button"
                 onClick={handleReset}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5e5e5] text-sm text-[#666666] hover:border-[#1a1a1a] hover:text-[#1a1a1a] transition-colors"
+                className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-[#e5e5e5] text-sm text-[#666666] hover:border-[#1a1a1a] hover:text-[#1a1a1a] transition-colors"
               >
                 <Undo className="w-4 h-4" />
-                Reset
+                <span className="hidden sm:inline">Reset</span>
               </button>
               <button
                 type="submit"
@@ -532,7 +442,8 @@ useEffect(() => {
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Save theme
+                    <span className="hidden sm:inline">Save theme</span>
+                    <span className="sm:hidden">Save</span>
                   </>
                 )}
               </button>
@@ -541,9 +452,9 @@ useEffect(() => {
         </div>
 
         {/* Right Side - Live Preview */}
-        <div className="lg:col-span-3 bg-[#f5f5f5] border border-[#e5e5e5] rounded-2xl overflow-hidden flex flex-col">
+        <div className="lg:col-span-3 bg-[#f5f5f5] border border-[#e5e5e5] rounded-2xl overflow-hidden flex flex-col min-h-[400px] sm:min-h-[500px] lg:min-h-0">
           {/* Preview Toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#e5e5e5] bg-white">
+          <div className="flex items-center justify-between px-3 sm:px-4 py-3 border-b border-[#e5e5e5] bg-white">
             <div className="flex items-center gap-2">
               <Monitor className="w-4 h-4 text-[#999999]" />
               <span className="text-sm font-medium text-[#1a1a1a]">Live preview</span>
@@ -569,20 +480,20 @@ useEffect(() => {
           </div>
 
           {/* Preview Content */}
-          <div className="flex-1 overflow-y-auto p-6 flex items-start justify-center">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-6 flex items-start justify-center">
             <div
               className={`bg-white shadow-lg transition-all duration-300 ${
-                previewMode === "mobile" ? "w-[375px]" : "w-full max-w-4xl"
+                previewMode === "mobile" ? "w-full max-w-[375px]" : "w-full max-w-4xl"
               }`}
               style={{
                 borderRadius: theme.border_radius,
                 fontFamily: theme.font_family,
-                minHeight: "600px",
+                minHeight: "500px",
               }}
             >
               {/* Mock Store Header */}
               <div
-                className="px-6 py-4 flex items-center justify-between border-b"
+                className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b"
                 style={{
                   backgroundColor: theme.background_color,
                   borderColor: theme.border_radius === "0px" ? "#e5e5e5" : "transparent",
@@ -591,20 +502,20 @@ useEffect(() => {
                 {theme.show_logo && (
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
                       style={{ backgroundColor: theme.primary_color }}
                     >
                       S
                     </div>
-                    <span className="font-semibold" style={{ color: theme.text_color }}>
+                    <span className="font-semibold text-sm sm:text-base" style={{ color: theme.text_color }}>
                       Store
                     </span>
                   </div>
                 )}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                   {theme.show_search && (
                     <div
-                      className="px-3 py-1.5 rounded-lg text-xs"
+                      className="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs"
                       style={{
                         backgroundColor: "#f5f5f5",
                         color: theme.text_color,
@@ -614,7 +525,7 @@ useEffect(() => {
                     </div>
                   )}
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs"
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs"
                     style={{ backgroundColor: theme.primary_color, color: "#fff" }}
                   >
                     C
@@ -625,17 +536,17 @@ useEffect(() => {
               {/* Mock Banner */}
               {theme.show_banner && (
                 <div
-                  className="relative flex items-center justify-center"
+                  className="relative flex items-center justify-center px-4"
                   style={{
-                    height: theme.banner_height,
+                    height: previewMode === "mobile" ? "200px" : theme.banner_height,
                     backgroundColor: theme.primary_color,
                   }}
                 >
                   <div className="text-center">
-                    <h2 className="text-2xl font-bold text-white mb-2">Welcome to our store</h2>
-                    <p className="text-white/70 text-sm">Discover amazing products</p>
+                    <h2 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">Welcome to our store</h2>
+                    <p className="text-white/70 text-xs sm:text-sm">Discover amazing products</p>
                     <button
-                      className="mt-4 px-6 py-2 rounded-full text-sm font-medium"
+                      className="mt-3 sm:mt-4 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium"
                       style={{
                         backgroundColor: theme.accent_color,
                         color: "#fff",
@@ -648,20 +559,22 @@ useEffect(() => {
               )}
 
               {/* Mock Product Grid */}
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 <h3
-                  className="text-lg font-semibold mb-4"
+                  className="text-base sm:text-lg font-semibold mb-3 sm:mb-4"
                   style={{ color: theme.text_color }}
                 >
                   Featured products
                 </h3>
                 <div
-                  className="grid gap-4"
+                  className="grid gap-3 sm:gap-4"
                   style={{
-                    gridTemplateColumns: `repeat(${theme.product_grid_columns}, 1fr)`,
+                    gridTemplateColumns: previewMode === "mobile"
+                      ? "repeat(2, 1fr)"
+                      : `repeat(${theme.product_grid_columns}, 1fr)`,
                   }}
                 >
-                  {Array.from({ length: 6 }).map((_, i) => (
+                  {Array.from({ length: previewMode === "mobile" ? 4 : 6 }).map((_, i) => (
                     <div
                       key={i}
                       className="border overflow-hidden"
@@ -674,11 +587,11 @@ useEffect(() => {
                         className="aspect-square"
                         style={{ backgroundColor: "#f5f5f5" }}
                       />
-                      <div className="p-3">
-                        <p className="text-sm font-medium" style={{ color: theme.text_color }}>
+                      <div className="p-2 sm:p-3">
+                        <p className="text-xs sm:text-sm font-medium" style={{ color: theme.text_color }}>
                           Product {i + 1}
                         </p>
-                        <p className="text-xs mt-1" style={{ color: theme.accent_color }}>
+                        <p className="text-xs mt-0.5 sm:mt-1" style={{ color: theme.accent_color }}>
                           ₹{(i + 1) * 999}
                         </p>
                       </div>
@@ -693,5 +606,3 @@ useEffect(() => {
     </div>
   );
 }
-
-import Link from "next/link";

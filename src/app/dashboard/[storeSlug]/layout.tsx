@@ -2,13 +2,6 @@ import { notFound, redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Script from "next/script";
-import {
-  Store,
-  ChevronRight,
-  LogOut,
-  ShoppingBag,
-} from "lucide-react";
-import { SidebarNav } from "@/components/dashboard/sidebar-nav";
 import { MobileSidebarWrapper } from "@/components/dashboard/mobile-sidebar-wrapper";
 
 async function getStore(storeSlug: string) {
@@ -62,9 +55,9 @@ export default async function DashboardLayout({
       />
       <div className="min-h-screen bg-[#f7f7f7] flex">
         <MobileSidebarWrapper storeSlug={storeSlug} storeName={store.name} />
-        
+
         <main className="flex-1 lg:ml-64 w-full min-w-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="pt-[60px] lg:pt-6 px-4 sm:px-6 py-6 sm:py-8 max-w-7xl mx-auto">
             {children}
           </div>
         </main>

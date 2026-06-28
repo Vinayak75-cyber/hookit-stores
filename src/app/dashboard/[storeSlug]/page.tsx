@@ -15,6 +15,7 @@ import {
   Settings,
   Palette,
   CreditCard,
+  ExternalLink,
 } from "lucide-react";
 
 async function getStoreData(storeSlug: string) {
@@ -39,17 +40,15 @@ async function getStoreData(storeSlug: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // FIXED: user_id instead of owner_id
   const { data: store } = await supabase
     .from("stores")
     .select("*")
     .eq("slug", storeSlug)
-    .eq("user_id", user.id) // FIXED: was owner_id
+    .eq("user_id", user.id)
     .single();
 
   if (!store) return null;
 
-  // Get analytics
   const { data: analytics } = await supabase
     .from("analytics")
     .select("*")
@@ -57,7 +56,6 @@ async function getStoreData(storeSlug: string) {
     .order("date", { ascending: false })
     .limit(30);
 
-  // Get orders
   const { data: orders } = await supabase
     .from("orders")
     .select("*, order_items(*)")
@@ -65,13 +63,11 @@ async function getStoreData(storeSlug: string) {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  // Get products count
   const { count: productsCount } = await supabase
     .from("products")
     .select("*", { count: "exact", head: true })
     .eq("store_id", store.id);
 
-  // Calculate totals
   const totalRevenue = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
   const totalOrders = orders?.length || 0;
   const totalCustomers = new Set(orders?.map((o) => o.customer_email)).size || 0;
@@ -112,6 +108,7 @@ export default async function DashboardOverviewPage({
       change: "+12%",
       up: true,
       color: "bg-green-50 text-green-600",
+      fullWidth: true,
     },
     {
       title: "Orders",
@@ -120,6 +117,7 @@ export default async function DashboardOverviewPage({
       change: "+8%",
       up: true,
       color: "bg-blue-50 text-blue-600",
+      fullWidth: false,
     },
     {
       title: "Products",
@@ -128,6 +126,7 @@ export default async function DashboardOverviewPage({
       change: "+3",
       up: true,
       color: "bg-purple-50 text-purple-600",
+      fullWidth: false,
     },
     {
       title: "Customers",
@@ -136,6 +135,7 @@ export default async function DashboardOverviewPage({
       change: "+15%",
       up: true,
       color: "bg-orange-50 text-orange-600",
+      fullWidth: false,
     },
     {
       title: "Store Views",
@@ -144,34 +144,35 @@ export default async function DashboardOverviewPage({
       change: "+24%",
       up: true,
       color: "bg-pink-50 text-pink-600",
+      fullWidth: false,
     },
   ];
 
   const quickActions = [
     {
       title: "Add Product",
-      description: "Add a new product to your store",
+      description: "Add a new product",
       icon: Plus,
       href: `/dashboard/${storeSlug}/products/new`,
       color: "bg-[#1a1a1a] text-white",
     },
     {
       title: "Store Settings",
-      description: "Update your store information",
+      description: "Update store info",
       icon: Settings,
       href: `/dashboard/${storeSlug}/settings`,
       color: "bg-[#f5f5f5] text-[#1a1a1a]",
     },
     {
       title: "Edit Theme",
-      description: "Customize your store appearance",
+      description: "Customize look",
       icon: Palette,
       href: `/dashboard/${storeSlug}/theme`,
       color: "bg-[#f5f5f5] text-[#1a1a1a]",
     },
     {
       title: "Payments",
-      description: "Connect your payment gateway",
+      description: "Connect gateway",
       icon: CreditCard,
       href: `/dashboard/${storeSlug}/payments`,
       color: "bg-[#f5f5f5] text-[#1a1a1a]",
@@ -179,9 +180,9 @@ export default async function DashboardOverviewPage({
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 sm:space-y-8">
+      {/* Header - Desktop */}
+      <div className="hidden lg:flex items-center justify-between pt-2">
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">{store.name}</h1>
           <p className="text-[#888888] text-sm mt-1">
@@ -198,16 +199,30 @@ export default async function DashboardOverviewPage({
         </Link>
       </div>
 
+      {/* Mobile View Store Button */}
+      <div className="lg:hidden pt-5">
+        <Link
+          href={`/${storeSlug}`}
+          target="_blank"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-[#e5e5e5] rounded-xl text-sm font-medium text-[#1a1a1a] hover:border-[#1a1a1a] transition-all"
+        >
+          <ExternalLink className="w-4 h-4" />
+          View store
+        </Link>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {statCards.map((stat) => (
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        {statCards.map((stat, index) => (
           <div
             key={stat.title}
-            className="bg-white border border-[#e5e5e5] rounded-2xl p-5 hover:shadow-md transition-shadow"
+            className={`bg-white border border-[#e5e5e5] rounded-2xl p-4 sm:p-5 hover:shadow-md transition-shadow ${
+              index === 0 ? "col-span-2 lg:col-span-1" : ""
+            }`}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
-                <stat.icon className="w-5 h-5" />
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${stat.color} flex items-center justify-center`}>
+                <stat.icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <span
                 className={`flex items-center gap-1 text-xs font-medium ${
@@ -222,30 +237,30 @@ export default async function DashboardOverviewPage({
                 {stat.change}
               </span>
             </div>
-            <p className="text-2xl font-bold text-[#1a1a1a]">{stat.value}</p>
-            <p className="text-[#888888] text-sm mt-1">{stat.title}</p>
+            <p className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">{stat.value}</p>
+            <p className="text-[#888888] text-xs sm:text-sm mt-1">{stat.title}</p>
           </div>
         ))}
       </div>
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-[#1a1a1a] mb-4">Quick actions</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h2 className="text-base sm:text-lg font-semibold text-[#1a1a1a] mb-3 sm:mb-4">Quick actions</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {quickActions.map((action) => (
             <Link
               key={action.title}
               href={action.href}
-              className="group flex items-start gap-4 p-5 bg-white border border-[#e5e5e5] rounded-2xl hover:border-[#1a1a1a] transition-all"
+              className="group flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-white border border-[#e5e5e5] rounded-2xl hover:border-[#1a1a1a] transition-all active:scale-[0.98]"
             >
-              <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center shrink-0`}>
-                <action.icon className="w-5 h-5" />
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl ${action.color} flex items-center justify-center shrink-0`}>
+                <action.icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <h3 className="font-medium text-[#1a1a1a] group-hover:text-[#1a1a1a]">
+              <div className="min-w-0">
+                <h3 className="font-medium text-[#1a1a1a] text-sm sm:text-base group-hover:text-[#1a1a1a]">
                   {action.title}
                 </h3>
-                <p className="text-[#888888] text-sm mt-1">{action.description}</p>
+                <p className="text-[#888888] text-xs sm:text-sm mt-0.5">{action.description}</p>
               </div>
             </Link>
           ))}
@@ -254,8 +269,8 @@ export default async function DashboardOverviewPage({
 
       {/* Recent Orders */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#1a1a1a]">Recent orders</h2>
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-[#1a1a1a]">Recent orders</h2>
           <Link
             href={`/dashboard/${storeSlug}/orders`}
             className="text-sm text-[#1a1a1a] hover:text-[#666666] transition-colors flex items-center gap-1"
@@ -265,7 +280,8 @@ export default async function DashboardOverviewPage({
           </Link>
         </div>
 
-        <div className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden">
+        {/* Desktop Table */}
+        <div className="hidden lg:block bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden">
           {recentOrders.length === 0 ? (
             <div className="p-8 text-center text-[#888888]">
               <ShoppingCart className="w-8 h-8 mx-auto mb-3 text-[#cccccc]" />
@@ -315,22 +331,22 @@ export default async function DashboardOverviewPage({
                       </td>
                       <td className="px-6 py-4">
                         <span
-  className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-    order.status === "paid"
-      ? "bg-green-50 text-green-700"
-      : order.status === "pending"
-      ? "bg-yellow-50 text-yellow-700"
-      : order.status === "shipped"
-      ? "bg-indigo-50 text-indigo-700"
-      : order.status === "delivered"
-      ? "bg-blue-50 text-blue-700"
-      : order.status === "cancelled"
-      ? "bg-red-50 text-red-700"
-      : "bg-gray-50 text-gray-700"
-  }`}
->
-  {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || "Pending"}
-</span>
+                          className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                            order.status === "paid"
+                              ? "bg-green-50 text-green-700"
+                              : order.status === "pending"
+                              ? "bg-yellow-50 text-yellow-700"
+                              : order.status === "shipped"
+                              ? "bg-indigo-50 text-indigo-700"
+                              : order.status === "delivered"
+                              ? "bg-blue-50 text-blue-700"
+                              : order.status === "cancelled"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-gray-50 text-gray-700"
+                          }`}
+                        >
+                          {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || "Pending"}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-[#1a1a1a] text-right">
                         ₹{order.total_amount?.toLocaleString()}
@@ -340,6 +356,71 @@ export default async function DashboardOverviewPage({
                 </tbody>
               </table>
             </div>
+          )}
+        </div>
+
+        {/* Mobile Order Cards */}
+        <div className="lg:hidden space-y-3">
+          {recentOrders.length === 0 ? (
+            <div className="bg-white border border-[#e5e5e5] rounded-2xl p-8 text-center text-[#888888]">
+              <ShoppingCart className="w-8 h-8 mx-auto mb-3 text-[#cccccc]" />
+              <p>No orders yet</p>
+              <p className="text-sm mt-1">Orders will appear here once customers start buying</p>
+            </div>
+          ) : (
+            recentOrders.map((order) => (
+              <div
+                key={order.id}
+                className="bg-white border border-[#e5e5e5] rounded-2xl p-4 active:bg-[#fafafa] transition-colors"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-[#1a1a1a]">
+                    #{order.id.slice(0, 8)}
+                  </span>
+                  <span
+                    className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                      order.status === "paid"
+                        ? "bg-green-50 text-green-700"
+                        : order.status === "pending"
+                        ? "bg-yellow-50 text-yellow-700"
+                        : order.status === "shipped"
+                        ? "bg-indigo-50 text-indigo-700"
+                        : order.status === "delivered"
+                        ? "bg-blue-50 text-blue-700"
+                        : order.status === "cancelled"
+                        ? "bg-red-50 text-red-700"
+                        : "bg-gray-50 text-gray-700"
+                    }`}
+                  >
+                    {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || "Pending"}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[#888888]">Customer</span>
+                    <span className="text-sm text-[#1a1a1a] font-medium">
+                      {order.customer_name || order.customer_email || "Guest"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[#888888]">Date</span>
+                    <span className="text-sm text-[#666666]">
+                      {new Date(order.created_at).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#f5f5f5]">
+                    <span className="text-xs text-[#888888]">Amount</span>
+                    <span className="text-base font-bold text-[#1a1a1a]">
+                      ₹{order.total_amount?.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>

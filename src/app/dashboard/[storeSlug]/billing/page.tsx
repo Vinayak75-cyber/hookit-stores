@@ -71,7 +71,7 @@ const plans = [
   {
     id: "growth",
     name: "Growth",
-    price: "₹299",
+    price: "₹999",
     period: "/month",
     description: "Best for growing businesses",
     commission: "0% Platform Commission",
@@ -140,7 +140,6 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
     setError("");
 
     try {
-      // Create Razorpay order
       const orderRes = await fetch("/api/billing/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -154,7 +153,6 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
         return;
       }
 
-      // Open Razorpay checkout
       const options = {
         key: orderData.key,
         amount: orderData.amount,
@@ -166,7 +164,6 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
         })}`,
         order_id: orderData.orderId,
         handler: async function (response: any) {
-          // Verify payment
           const verifyRes = await fetch("/api/billing/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -220,9 +217,9 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
 
       const result = await res.json();
       if (res.ok) {
-  await fetchBilling();
-  router.refresh();
-} else {
+        await fetchBilling();
+        router.refresh();
+      } else {
         setError(result.error || "Upgrade failed");
       }
     } catch {
@@ -279,29 +276,29 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
   const isStoreActive = data.store.is_active;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">Billing</h1>
+      <div className="pt-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Billing</h1>
         <p className="text-[#888] text-sm mt-1">Manage your subscription and payments</p>
       </div>
 
       {/* Billing Support Banner */}
-<div className="bg-[#f7f7f7] border border-[#e5e5e5] rounded-xl p-4 flex items-center gap-3">
-  <div className="w-8 h-8 bg-[#1a1a1a] rounded-lg flex items-center justify-center shrink-0">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-    </svg>
-  </div>
-  <div>
-    <p className="text-sm text-[#1a1a1a] font-medium">
-      Need help with billing?
-    </p>
-    <p className="text-xs text-[#666]">
-      Call us at <a href="tel:+918459444524" className="font-semibold text-[#1a1a1a] hover:underline">+91 84594 44524</a> · Mon–Fri, 12:00 PM – 5:00 PM IST
-    </p>
-  </div>
-</div>
+      <div className="bg-[#f7f7f7] border border-[#e5e5e5] rounded-xl p-4 flex items-start sm:items-center gap-3">
+        <div className="w-8 h-8 bg-[#1a1a1a] rounded-lg flex items-center justify-center shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm text-[#1a1a1a] font-medium">
+            Need help with billing?
+          </p>
+          <p className="text-xs text-[#666]">
+            Call us at <a href="tel:+918459444524" className="font-semibold text-[#1a1a1a] hover:underline">+91 84594 44524</a> · Mon–Fri, 12:00 PM – 5:00 PM IST
+          </p>
+        </div>
+      </div>
 
       {/* Store Status Alert */}
       {!isStoreActive && (
@@ -318,16 +315,16 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
 
       {/* Current Bill Card */}
       {data.currentBill && data.currentBill.status !== "waived" && (
-        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-6">
-          <div className="flex items-start justify-between mb-6">
+        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 sm:mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Receipt className="w-4 h-4 text-[#999]" />
-                <span className="text-sm text-[#999] font-medium uppercase tracking-wide">
+                <span className="text-xs sm:text-sm text-[#999] font-medium uppercase tracking-wide">
                   Current Bill
                 </span>
               </div>
-              <h2 className="text-2xl font-bold text-[#1a1a1a]">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                 {new Date(data.currentBill.bill_month).toLocaleString("default", {
                   month: "long",
                   year: "numeric",
@@ -335,7 +332,7 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
               </h2>
             </div>
             <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border self-start ${getStatusBadge(
                 data.currentBill.status
               )}`}
             >
@@ -344,16 +341,16 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-6">
             <div className="bg-[#f7f7f7] rounded-xl p-4">
               <p className="text-xs text-[#999] mb-1">Total Amount</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">
+              <p className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                 ₹{data.currentBill.total_amount.toFixed(2)}
               </p>
             </div>
             <div className="bg-[#f7f7f7] rounded-xl p-4">
               <p className="text-xs text-[#999] mb-1">Due Date</p>
-              <p className="text-lg font-semibold text-[#1a1a1a]">
+              <p className="text-base sm:text-lg font-semibold text-[#1a1a1a]">
                 {new Date(data.currentBill.due_date).toLocaleDateString("en-IN", {
                   day: "numeric",
                   month: "long",
@@ -363,40 +360,40 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
             </div>
             <div className="bg-[#f7f7f7] rounded-xl p-4">
               <p className="text-xs text-[#999] mb-1">Plan</p>
-              <p className="text-lg font-semibold text-[#1a1a1a] capitalize">
+              <p className="text-base sm:text-lg font-semibold text-[#1a1a1a] capitalize">
                 {data.currentBill.plan_type}
               </p>
             </div>
           </div>
 
           {data.currentBill.plan_type === "starter" && (
-  <div className="flex items-center gap-4 text-sm text-[#666] mb-6">
-    <span className="flex items-center gap-1.5">
-      <TrendingUp className="w-4 h-4" />
-      {data.currentBill.total_orders_count} orders
-    </span>
-    <span>•</span>
-    <span>3% commission on (subtotal + GST)</span>
-  </div>
-)}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#666] mb-4 sm:mb-6">
+              <span className="flex items-center gap-1.5">
+                <TrendingUp className="w-4 h-4" />
+                {data.currentBill.total_orders_count} orders
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <span>3% commission on (subtotal + GST)</span>
+            </div>
+          )}
 
-{data.currentBill.plan_type === "growth" && (
-  <div className="flex items-center gap-4 text-sm text-[#666] mb-6">
-    <span className="flex items-center gap-1.5">
-      <Zap className="w-4 h-4" />
-      Fixed monthly subscription
-    </span>
-    <span>•</span>
-    <span>0% Platform Commission</span>
-  </div>
-)}
+          {data.currentBill.plan_type === "growth" && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#666] mb-4 sm:mb-6">
+              <span className="flex items-center gap-1.5">
+                <Zap className="w-4 h-4" />
+                Fixed monthly subscription
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <span>0% Platform Commission</span>
+            </div>
+          )}
 
           {data.currentBill.status === "pending" && (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <button
                 onClick={() => handlePay(data.currentBill!)}
                 disabled={paying || data.currentBill.total_amount === 0}
-                className="flex items-center gap-2 bg-[#1a1a1a] text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 bg-[#1a1a1a] text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {paying ? (
                   <>
@@ -412,7 +409,7 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
               </button>
               <button
                 onClick={() => downloadInvoice(data.currentBill!.id)}
-                className="flex items-center gap-2 border border-[#e5e5e5] text-[#1a1a1a] px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#f5f5f5] transition-colors"
+                className="flex items-center justify-center gap-2 border border-[#e5e5e5] text-[#1a1a1a] px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#f5f5f5] transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Download Invoice
@@ -421,14 +418,14 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
           )}
 
           {data.currentBill.status === "paid" && (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
               <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
                 <Check className="w-4 h-4" />
                 Paid on {new Date(data.currentBill.paid_at!).toLocaleDateString("en-IN")}
               </div>
               <button
                 onClick={() => downloadInvoice(data.currentBill!.id)}
-                className="flex items-center gap-2 border border-[#e5e5e5] text-[#1a1a1a] px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#f5f5f5] transition-colors"
+                className="flex items-center justify-center gap-2 border border-[#e5e5e5] text-[#1a1a1a] px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-[#f5f5f5] transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Download Invoice
@@ -441,7 +438,7 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
               <button
                 onClick={() => handlePay(data.currentBill!)}
                 disabled={paying}
-                className="flex items-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center gap-2 bg-red-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50 w-full sm:w-auto"
               >
                 {paying ? (
                   <>
@@ -460,44 +457,44 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
         </div>
       )}
 
-            {/* Growth Plan Active - No Bill */}
+      {/* Growth Plan Active - No Bill */}
       {!data.currentBill && currentPlan === "growth" && (
-        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-6">
-          <div className="flex items-start justify-between mb-6">
+        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4 sm:mb-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Zap className="w-4 h-4 text-[#999]" />
-                <span className="text-sm text-[#999] font-medium uppercase tracking-wide">
+                <span className="text-xs sm:text-sm text-[#999] font-medium uppercase tracking-wide">
                   Growth Plan
                 </span>
               </div>
-              <h2 className="text-2xl font-bold text-[#1a1a1a]">Subscription Active</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Subscription Active</h2>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border bg-green-50 text-green-700 border-green-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border bg-green-50 text-green-700 border-green-200 self-start">
               <Check className="w-3.5 h-3.5" />
               Active
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-4 sm:mb-6">
             <div className="bg-[#f7f7f7] rounded-xl p-4">
               <p className="text-xs text-[#999] mb-1">Monthly Amount</p>
-              <p className="text-2xl font-bold text-[#1a1a1a]">₹299.00</p>
+              <p className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">₹999.00</p>
             </div>
             <div className="bg-[#f7f7f7] rounded-xl p-4">
               <p className="text-xs text-[#999] mb-1">Next Billing</p>
-              <p className="text-lg font-semibold text-[#1a1a1a]">
+              <p className="text-base sm:text-lg font-semibold text-[#1a1a1a]">
                 1st {new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleString("default", { month: "long" })}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-[#666]">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#666]">
             <span className="flex items-center gap-1.5">
               <Zap className="w-4 h-4" />
               0% Platform Commission
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>Fixed monthly subscription</span>
           </div>
         </div>
@@ -505,8 +502,8 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
 
       {/* Starter Plan - No Bill */}
       {!data.currentBill && currentPlan !== "growth" && (
-        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-8 text-center">
-          <Receipt className="w-12 h-12 text-[#ddd] mx-auto mb-3" />
+        <div className="bg-white border border-[#e5e5e5] rounded-2xl p-6 sm:p-8 text-center">
+          <Receipt className="w-10 h-10 sm:w-12 sm:h-12 text-[#ddd] mx-auto mb-3" />
           <p className="text-[#999] text-sm">No pending bills to pay.</p>
           <p className="text-[#bbb] text-xs mt-1">You're all caught up! Next bill generates on the 1st of next month.</p>
         </div>
@@ -514,59 +511,109 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
 
       {/* Bill History */}
       {data.billHistory.length > 0 && (
-        <div className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#f0f0f0]">
-            <h3 className="text-sm font-semibold text-[#1a1a1a]">Bill History</h3>
-          </div>
-          <div className="divide-y divide-[#f0f0f0]">
-            {data.billHistory.map((bill) => (
-              <div key={bill.id} className="px-6 py-4 flex items-center justify-between hover:bg-[#fafafa] transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-[#f5f5f5] flex items-center justify-center">
-                    <Receipt className="w-4 h-4 text-[#999]" />
+        <div>
+          <h3 className="text-base sm:text-lg font-bold text-[#1a1a1a] mb-3 sm:mb-4">Bill History</h3>
+          <div className="bg-white border border-[#e5e5e5] rounded-2xl overflow-hidden">
+            {/* Desktop Table */}
+            <div className="hidden sm:block">
+              <div className="px-6 py-4 border-b border-[#f0f0f0]">
+                <h3 className="text-sm font-semibold text-[#1a1a1a]">Bill History</h3>
+              </div>
+              <div className="divide-y divide-[#f0f0f0]">
+                {data.billHistory.map((bill) => (
+                  <div key={bill.id} className="px-6 py-4 flex items-center justify-between hover:bg-[#fafafa] transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-[#f5f5f5] flex items-center justify-center">
+                        <Receipt className="w-4 h-4 text-[#999]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[#1a1a1a]">
+                          {new Date(bill.bill_month).toLocaleString("default", {
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </p>
+                        <p className="text-xs text-[#999] capitalize">{bill.plan_type} Plan</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-[#1a1a1a]">
+                          ₹{bill.total_amount.toFixed(2)}
+                        </p>
+                        <span
+                          className={`inline-flex items-center gap-1 text-xs font-medium ${getStatusBadge(
+                            bill.status
+                          )} px-2 py-0.5 rounded-full border mt-0.5`}
+                        >
+                          {getStatusIcon(bill.status)}
+                          {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => downloadInvoice(bill.id)}
+                        className="p-2 hover:bg-[#f5f5f5] rounded-lg transition-colors"
+                        title="Download Invoice"
+                      >
+                        <Download className="w-4 h-4 text-[#999]" />
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-[#1a1a1a]">
-                      {new Date(bill.bill_month).toLocaleString("default", {
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </p>
-                    <p className="text-xs text-[#999] capitalize">{bill.plan_type} Plan</p>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="sm:hidden divide-y divide-[#f0f0f0]">
+              {data.billHistory.map((bill) => (
+                <div key={bill.id} className="p-4 active:bg-[#fafafa] transition-colors">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-[#f5f5f5] flex items-center justify-center">
+                        <Receipt className="w-4 h-4 text-[#999]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[#1a1a1a]">
+                          {new Date(bill.bill_month).toLocaleString("default", {
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </p>
+                        <p className="text-xs text-[#999] capitalize">{bill.plan_type} Plan</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => downloadInvoice(bill.id)}
+                      className="p-2 hover:bg-[#f5f5f5] rounded-lg transition-colors"
+                      title="Download Invoice"
+                    >
+                      <Download className="w-4 h-4 text-[#999]" />
+                    </button>
                   </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-[#1a1a1a]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-[#1a1a1a]">
                       ₹{bill.total_amount.toFixed(2)}
-                    </p>
+                    </span>
                     <span
                       className={`inline-flex items-center gap-1 text-xs font-medium ${getStatusBadge(
                         bill.status
-                      )} px-2 py-0.5 rounded-full border mt-0.5`}
+                      )} px-2.5 py-1 rounded-full border`}
                     >
                       {getStatusIcon(bill.status)}
                       {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                     </span>
                   </div>
-                  <button
-                    onClick={() => downloadInvoice(bill.id)}
-                    className="p-2 hover:bg-[#f5f5f5] rounded-lg transition-colors"
-                    title="Download Invoice"
-                  >
-                    <Download className="w-4 h-4 text-[#999]" />
-                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       )}
 
       {/* Upgrade Plans */}
       <div>
-        <h3 className="text-lg font-bold text-[#1a1a1a] mb-6">Upgrade Your Plan</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <h3 className="text-base sm:text-lg font-bold text-[#1a1a1a] mb-4 sm:mb-6">Upgrade Your Plan</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {plans.map((plan) => {
             const isCurrent = currentPlan === plan.id;
             const isPro = plan.id === "pro";
@@ -574,13 +621,13 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-2xl border p-6 ${
-  isCurrent
-    ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-    : plan.popular && !isCurrent
-    ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
-    : "border-[#e5e5e5] bg-white"
-}`}
+                className={`relative rounded-2xl border p-4 sm:p-6 ${
+                  isCurrent
+                    ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
+                    : plan.popular && !isCurrent
+                    ? "border-[#1a1a1a] bg-[#1a1a1a] text-white"
+                    : "border-[#e5e5e5] bg-white"
+                }`}
               >
                 {plan.popular && !isCurrent && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -591,17 +638,17 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
                 )}
 
                 {isPro && (
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
                     <span className="bg-[#f0f0f0] text-[#999] text-xs font-medium px-2.5 py-1 rounded-full">
                       Coming Soon
                     </span>
                   </div>
                 )}
 
-                <div className="mb-6">
-                  <h4 className="text-lg font-bold mb-1">{plan.name}</h4>
+                <div className="mb-4 sm:mb-6">
+                  <h4 className="text-base sm:text-lg font-bold mb-1">{plan.name}</h4>
                   <div className="flex items-baseline gap-1 mb-2">
-                    <span className="text-3xl font-extrabold">{plan.price}</span>
+                    <span className="text-2xl sm:text-3xl font-extrabold">{plan.price}</span>
                     <span
                       className={`text-sm ${
                         isCurrent || plan.popular ? "text-gray-400" : "text-[#999]"
@@ -620,7 +667,7 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
                 </div>
 
                 <div
-                  className={`rounded-lg p-3 mb-6 text-sm font-medium ${
+                  className={`rounded-lg p-3 mb-4 sm:mb-6 text-sm font-medium ${
                     isCurrent || plan.popular
                       ? "bg-white/10 text-white"
                       : "bg-[#f7f7f7] text-[#1a1a1a]"
@@ -629,7 +676,7 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
                   {plan.commission}
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2.5 text-sm">
                       <Check
@@ -649,35 +696,35 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
                 </ul>
 
                 <button
-  onClick={() => handleUpgrade(plan.id)}
-  disabled={isCurrent || isPro || upgrading === plan.id}
-  className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
-    isCurrent
-      ? "bg-white/10 text-white cursor-default"
-      : plan.popular && !isCurrent
-      ? "bg-white text-[#1a1a1a] hover:bg-gray-100 disabled:opacity-50"
-      : isPro
-      ? "bg-[#f5f5f5] text-[#bbb] cursor-not-allowed"
-      : "bg-[#1a1a1a] text-white hover:bg-[#333] disabled:opacity-50"
-  }`}
->
+                  onClick={() => handleUpgrade(plan.id)}
+                  disabled={isCurrent || isPro || upgrading === plan.id}
+                  className={`w-full py-3 rounded-xl text-sm font-semibold transition-colors ${
+                    isCurrent
+                      ? "bg-white/10 text-white cursor-default"
+                      : plan.popular && !isCurrent
+                      ? "bg-white text-[#1a1a1a] hover:bg-gray-100 disabled:opacity-50"
+                      : isPro
+                      ? "bg-[#f5f5f5] text-[#bbb] cursor-not-allowed"
+                      : "bg-[#1a1a1a] text-white hover:bg-[#333] disabled:opacity-50"
+                  }`}
+                >
                   {upgrading === plan.id ? (
-  <span className="flex items-center justify-center gap-2">
-    <Loader2 className="w-4 h-4 animate-spin" />
-    Upgrading...
-  </span>
-) : isCurrent ? (
-  "Current Plan"
-) : isPro ? (
-  <span className="flex items-center justify-center gap-2">
-    <Lock className="w-4 h-4" />
-    Coming Soon
-  </span>
-) : plan.id === "starter" && currentPlan === "growth" ? (
-  "Downgrade"
-) : (
-  plan.cta
-)}
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Upgrading...
+                    </span>
+                  ) : isCurrent ? (
+                    "Current Plan"
+                  ) : isPro ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Lock className="w-4 h-4" />
+                      Coming Soon
+                    </span>
+                  ) : plan.id === "starter" && currentPlan === "growth" ? (
+                    "Downgrade"
+                  ) : (
+                    plan.cta
+                  )}
                 </button>
               </div>
             );

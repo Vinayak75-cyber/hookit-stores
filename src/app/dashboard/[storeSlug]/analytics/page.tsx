@@ -172,7 +172,7 @@ export default async function AnalyticsPage({
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div>
+      <div className="pt-3">
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">Analytics</h1>
         <p className="text-[#888888] text-sm mt-1">
           Performance insights for {store.name}
@@ -225,30 +225,61 @@ export default async function AnalyticsPage({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-end gap-1 sm:gap-2 h-40 sm:h-48 overflow-x-auto pb-2">
-              {dailyData.map((day, i) => {
-                const maxRevenue = Math.max(...dailyData.map((d) => d.revenue), 1);
-                const height = Math.max((day.revenue / maxRevenue) * 100, 4);
-                return (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1 sm:gap-2 min-w-[48px] sm:min-w-[60px]">
-                    <div className="text-[10px] sm:text-xs font-medium text-[#1a1a1a] mb-1 hidden sm:block">
-                      ₹{day.revenue.toLocaleString("en-IN")}
-                    </div>
-                    <div
-                      className="w-full max-w-[40px] sm:max-w-[60px] bg-[#1a1a1a] rounded-t-lg transition-all hover:bg-[#333333] relative group mx-auto"
-                      style={{ height: `${height}%` }}
-                    >
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#1a1a1a] text-white text-[10px] sm:text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                        ₹{day.revenue.toLocaleString("en-IN")}
+            {/* Mobile: horizontal scrollable bar chart */}
+            <div className="sm:hidden overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+              <div className="flex items-end gap-2 min-w-max">
+                {dailyData.map((day, i) => {
+                  const maxRevenue = Math.max(...dailyData.map((d) => d.revenue), 1);
+                  const height = Math.max((day.revenue / maxRevenue) * 100, 4);
+                  return (
+                    <div key={i} className="flex flex-col items-center gap-1 w-14">
+                      <span className="text-[10px] font-medium text-[#1a1a1a]">
+                        ₹{(day.revenue / 1000).toFixed(0)}k
+                      </span>
+                      <div
+                        className="w-10 bg-[#1a1a1a] rounded-t-lg transition-all hover:bg-[#333333] relative group"
+                        style={{ height: `${Math.max(height * 0.8, 24)}px` }}
+                      >
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#1a1a1a] text-white text-[10px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                          ₹{day.revenue.toLocaleString("en-IN")}
+                        </div>
                       </div>
+                      <span className="text-[9px] text-[#999999]">
+                        {new Date(day.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </span>
                     </div>
-                    <span className="text-[9px] sm:text-[10px] text-[#999999]">
-                      {new Date(day.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Desktop: flex bar chart */}
+<div className="hidden sm:flex items-end justify-between gap-3 h-48">
+  {dailyData.map((day, i) => {
+    const maxRevenue = Math.max(...dailyData.map((d) => d.revenue), 1);
+    const heightPercent = Math.max((day.revenue / maxRevenue) * 100, 12);
+    return (
+      <div key={i} className="flex flex-col items-center gap-2 flex-1 min-w-[60px]">
+        <div className="text-xs font-medium text-[#1a1a1a]">
+          ₹{day.revenue.toLocaleString("en-IN")}
+        </div>
+        <div className="w-full flex items-end justify-center h-32">
+          <div
+            className="w-full max-w-[60px] bg-[#1a1a1a] rounded-t-lg transition-all hover:bg-[#333333] relative group"
+            style={{ height: `${heightPercent}%` }}
+          >
+            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#1a1a1a] text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+              ₹{day.revenue.toLocaleString("en-IN")}
+            </div>
+          </div>
+        </div>
+        <span className="text-[10px] text-[#999999]">
+          {new Date(day.date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+        </span>
+      </div>
+    );
+  })}
+</div>
           </div>
         )}
       </div>

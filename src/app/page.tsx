@@ -424,7 +424,7 @@ export default function LandingPage() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-white">Growth</h3>
                 <div className="flex items-baseline gap-1 mt-2">
-                  <span className="text-4xl font-bold text-white">₹299</span>
+                  <span className="text-4xl font-bold text-white">₹999</span>
                   <span className="text-gray-400">/month</span>
                 </div>
                 <p className="text-sm text-gray-400 mt-2">Best for growing businesses</p>
@@ -436,8 +436,6 @@ export default function LandingPage() {
                 {[
                   "Everything in Starter",
                   "0% Platform Commission",
-                  "Custom Domain Support",
-                  "Shipping Integration",
                   "Priority Support",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-3 text-sm text-gray-300">
@@ -468,12 +466,15 @@ export default function LandingPage() {
                 <p className="text-sm text-gray-500 mt-2">One-time setup fee</p>
               </div>
               <div className="mb-6 py-3 px-4 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium">₹49/month maintenance</p>
+                <p className="text-sm font-medium">₹99/month maintenance</p>
               </div>
               <ul className="space-y-3 mb-8">
                 {[
                   "Everything in Growth",
                   "Premium Features",
+                  "Custom Domain Support",
+                  "Shipping Integration",
+                  "Multiple Store Themes",
                   "Advanced Integrations",
                   "Future Business Tools",
                 ].map((f) => (
@@ -484,7 +485,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <Button disabled className="w-full bg-gray-100 text-gray-400 rounded-full h-11 text-sm font-medium cursor-not-allowed">
-                Launching Next Year
+                Launching Soon
               </Button>
             </div>
           </div>
