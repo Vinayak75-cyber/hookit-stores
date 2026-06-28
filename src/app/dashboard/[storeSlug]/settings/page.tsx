@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
@@ -34,6 +35,9 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   // Upload states
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -292,6 +296,30 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
       setSaving(false);
     }
   };
+
+  const handleDeleteStore = async () => {
+  if (deleteConfirmText !== form.name) return;
+  
+  setDeleting(true);
+  setError("");
+
+  try {
+    const res = await fetch(`/api/stores/${storeSlug}/delete`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Failed to delete store");
+    }
+
+    // Redirect to dashboard after deletion
+    router.push("/dashboard");
+  } catch (err: any) {
+    setError(err.message || "Failed to delete store");
+    setDeleting(false);
+  }
+};
 
   if (loading) {
     return (
@@ -638,6 +666,69 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
               </>
             )}
           </button>
+
+          {/* Danger Zone */}
+<div className="bg-white border border-red-200 rounded-2xl p-6 space-y-4">
+  <h2 className="text-lg font-semibold text-red-600 flex items-center gap-2">
+    <AlertTriangle className="w-5 h-5" />
+    Danger Zone
+  </h2>
+  <p className="text-sm text-[#888888]">
+    Once you delete your store, there is no going back. All products, orders, and data will be permanently removed.
+  </p>
+  
+  {!showDeleteConfirm ? (
+    <button
+      type="button"
+      onClick={() => setShowDeleteConfirm(true)}
+      className="w-full border border-red-300 text-red-600 font-medium py-3 rounded-xl hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+    >
+      <Trash2 className="w-4 h-4" />
+      Delete store
+    </button>
+  ) : (
+    <div className="space-y-3">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+        <p className="text-sm text-red-700 font-medium">
+          Type <span className="font-bold">{form.name}</span> to confirm deletion
+        </p>
+      </div>
+      <input
+        type="text"
+        value={deleteConfirmText}
+        onChange={(e) => setDeleteConfirmText(e.target.value)}
+        placeholder={`Type "${form.name}" to confirm`}
+        className="w-full border border-red-200 rounded-xl py-3 px-4 text-sm text-[#1a1a1a] placeholder-[#bbbbbb] focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 transition-all"
+      />
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setShowDeleteConfirm(false);
+            setDeleteConfirmText("");
+          }}
+          className="flex-1 border border-[#e5e5e5] text-[#666666] font-medium py-3 rounded-xl hover:bg-[#f5f5f5] transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleDeleteStore}
+          disabled={deleteConfirmText !== form.name || deleting}
+          className="flex-1 bg-red-600 text-white font-medium py-3 rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {deleting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Trash2 className="w-4 h-4" />
+          )}
+          {deleting ? "Deleting..." : "Delete"}
+        </button>
+      </div>
+    </div>
+  )}
+</div>
+
         </div>
       </form>
     </div>

@@ -145,10 +145,8 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-lg font-bold tracking-tight">hookit</span>
+                <ShoppingBag className="w-7 h-7 text-black" />
+              <span className="text-2xl font-bold tracking-tight">hookit</span>
             </Link>
             <div className="hidden md:flex items-center gap-8">
               <a href="#how-it-works" className="text-sm font-medium text-gray-500 hover:text-black transition-colors">
@@ -549,10 +547,8 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 bg-black rounded-lg flex items-center justify-center">
-                  <ShoppingBag className="w-3.5 h-3.5 text-white" />
-                </div>
-                <span className="font-bold">hookit</span>
+                <ShoppingBag className="w-7 h-7 text-black" />
+                <span className="font-bold text-2xl">hookit</span>
               </div>
               <p className="text-sm text-gray-500 leading-relaxed">
                 The easiest way for small businesses to launch a professional online store.
@@ -584,7 +580,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-gray-100">
-            <p className="text-sm text-gray-400">Made with love for creators and small businesses.</p>
+            <p className="text-sm text-gray-400">Made with love for creators and D2C businesses.</p>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
               <a href="#" className="text-gray-400 hover:text-black transition-colors">
                 <Twitter className="w-4 h-4" />
