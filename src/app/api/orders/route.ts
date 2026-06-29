@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       .from("stores")
       .select("id, name, slug")
       .eq("id", body.store_id)
-      .single();
+      .maybeSingle();
 
     if (!store) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       .from("payment_settings")
       .select("razorpay_key_id, razorpay_key_secret, currency, test_mode, is_connected")
       .eq("store_id", store.id)
-      .single();
+      .maybeSingle();
 
     if (!paymentSettings?.razorpay_key_id || !paymentSettings.razorpay_key_secret) {
       return NextResponse.json(
