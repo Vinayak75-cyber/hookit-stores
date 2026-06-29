@@ -16,11 +16,9 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Verify the recovery token is present
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash.includes("type=recovery")) {
-      // No recovery token — redirect to login
       router.push("/login");
     }
   }, [router]);
@@ -42,10 +40,7 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      password,
-    });
-
+    const { error: updateError } = await supabase.auth.updateUser({ password });
     setLoading(false);
 
     if (updateError) {
@@ -91,7 +86,9 @@ export default function ResetPasswordPage() {
 
         <div className="bg-[#111111] border border-[#222222] rounded-2xl p-8">
           <h1 className="text-2xl font-semibold text-white mb-2">New password</h1>
-          <p className="text-[#666666] text-sm mb-8">Create a new password for your account</p>
+          <p className="text-[#666666] text-sm mb-8">
+            Create a new password for your account
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
