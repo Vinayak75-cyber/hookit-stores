@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Plus, Store, ArrowRight, Settings, Crown } from "lucide-react";
+import LogoutButton from "../../components/LogoutButton";
 
 async function getUserStores() {
   const cookieStore = await cookies();
@@ -63,14 +64,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <header className="bg-white border-b border-[#e5e5e5]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <form action="/api/auth?action=logout" method="POST">
-            <button
-              type="submit"
-              className="text-sm text-[#666666] hover:text-[#1a1a1a] transition-colors"
-            >
-              Sign out
-            </button>
-          </form>
+          <LogoutButton />
         </div>
       </header>
 
