@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 
 const EXCLUDED_ANALYTICS_PATHS = [
   "/dashboard", "/api", "/login", "/signup", "/onboarding",
@@ -9,13 +8,9 @@ const EXCLUDED_ANALYTICS_PATHS = [
 
 // 🔒 SECURITY: Validate redirect URLs are relative and safe
 function isValidRedirect(url: string): boolean {
-  // Must be a relative path starting with /
   if (!url.startsWith("/")) return false;
-  // Must not be a protocol-relative URL (//evil.com)
   if (url.startsWith("//")) return false;
-  // Must not contain @ (prevents user@evil.com trick)
   if (url.includes("@")) return false;
-  // Must not contain : (prevents javascript:alert(1) or http://)
   if (url.includes(":")) return false;
   return true;
 }
@@ -58,13 +53,6 @@ export async function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const cleanHost = hostname.replace(/^www\./, "");
 
-  // 🔒 CSRF: Generate/set CSRF token cookie if not present
-  const existingCsrf = request.cookies.get("csrf_token")?.value;
-  if (!existingCsrf) {
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(supabaseResponse, csrfToken);
-  }
-
   // ===== SUBDOMAIN ROUTING =====
   const isMainDomain =
     cleanHost === "hookit.online" ||
@@ -85,7 +73,6 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/dashboard") && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    // 🔒 SECURITY: Only set redirect if it's a safe relative path on our domain
     if (isValidRedirect(pathname)) {
       url.searchParams.set("redirect", pathname);
     }
@@ -117,7 +104,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 🔒 SECURITY HEADERS — Apply to all responses
+  // 🔒 SECURITY HEADERS
   const securityHeaders = {
     "X-DNS-Prefetch-Control": "on",
     "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
