@@ -204,6 +204,11 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
     setForm((prev) => ({ ...prev, banner_url: "" }));
   };
 
+    const getCsrfToken = () => {
+    const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
+    return match ? match[2] : '';
+  };
+
   const uploadImage = async (file: File, type: "logo" | "banner"): Promise<string> => {
     const fileName = `${storeSlug}/${type}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.webp`;
     const formData = new FormData();
@@ -212,6 +217,9 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
 
     const res = await fetch("/api/upload", {
       method: "POST",
+      headers: {
+        "X-CSRF-Token": getCsrfToken(),
+      },
       body: formData,
     });
 

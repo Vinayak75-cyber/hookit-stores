@@ -1171,7 +1171,18 @@ export default function AddProductPage({ params }: { params: Promise<{ storeSlug
       formData.append("file", compressedFile);
       formData.append("fileName", fileName);
 
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const getCsrfToken = () => {
+        const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
+        return match ? match[2] : '';
+      };
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: {
+          "X-CSRF-Token": getCsrfToken(),
+        },
+        body: formData,
+      });
       if (!res.ok) throw new Error("Upload failed");
       const { url } = await res.json();
       uploadedUrls.push(url);

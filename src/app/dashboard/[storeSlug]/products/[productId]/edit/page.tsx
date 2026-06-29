@@ -998,6 +998,11 @@ export default function EditProductPage({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
+  const getCsrfToken = () => {
+  const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
+  return match ? match[2] : '';
+};
+
   // Resolve params
   useEffect(() => {
     params.then((p) => {
@@ -1259,7 +1264,18 @@ export default function EditProductPage({
       const fd = new FormData();
       fd.append("file", compressedFile);
       fd.append("fileName", fileName);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const getCsrfToken = () => {
+        const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
+        return match ? match[2] : '';
+      };
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        headers: {
+          "X-CSRF-Token": getCsrfToken(),
+        },
+        body: fd,
+      });
       if (!res.ok) throw new Error("Upload failed");
       const { url } = await res.json();
       uploadedUrls.push(url);
@@ -1276,10 +1292,6 @@ export default function EditProductPage({
       .single();
     if (!store) return;
     
-    const getCsrfToken = () => {
-  const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
-  return match ? match[2] : '';
-};
 
 const res = await fetch("/api/collections", {
   method: "POST",

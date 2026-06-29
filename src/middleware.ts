@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  let supabaseResponse = NextResponse.next({ request });
+  let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,9 +32,8 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          // 🔒 FIX: Don't recreate response — just set cookies on existing one
           cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, options);
+            response.cookies.set(name, value, options);
           });
         },
       },
@@ -106,11 +105,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // 🔒 CSRF: Generate/set CSRF token cookie if not present
-  // 🔒 FIX: Do this AFTER all Supabase operations so it survives setAll calls
   const existingCsrf = request.cookies.get("csrf_token")?.value;
   if (!existingCsrf) {
     const csrfToken = generateCsrfToken();
-    setCsrfCookie(supabaseResponse, csrfToken);
+    setCsrfCookie(response, csrfToken);
   }
 
   // 🔒 SECURITY HEADERS (skip for API routes)
@@ -135,11 +133,11 @@ export async function middleware(request: NextRequest) {
     };
 
     Object.entries(securityHeaders).forEach(([key, value]) => {
-      supabaseResponse.headers.set(key, value);
+      response.headers.set(key, value);
     });
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {
