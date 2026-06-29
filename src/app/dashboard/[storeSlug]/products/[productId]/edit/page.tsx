@@ -1275,11 +1275,21 @@ export default function EditProductPage({
       .eq("slug", storeSlug)
       .single();
     if (!store) return;
-    const res = await fetch("/api/collections", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ store_id: store.id, name: newCollectionName.trim() }),
-    });
+    
+    const getCsrfToken = () => {
+  const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
+  return match ? match[2] : '';
+};
+
+const res = await fetch("/api/collections", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "x-csrf-token": getCsrfToken(),
+  },
+  body: JSON.stringify({ store_id: store.id, name: newCollectionName.trim() }),
+});
+
     const data = await res.json();
     if (data.collection) {
       setCollections((prev) => [...prev, data.collection]);

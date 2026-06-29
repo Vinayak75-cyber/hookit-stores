@@ -1262,12 +1262,20 @@ export default function AddProductPage({ params }: { params: Promise<{ storeSlug
         status: form.visibility === "active" ? "active" : "draft",
       };
 
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...payload,
-          images: [],
+      const getCsrfToken = () => {
+  const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
+  return match ? match[2] : '';
+};
+
+const res = await fetch("/api/products", {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "x-csrf-token": getCsrfToken(),
+  },
+  body: JSON.stringify({
+    ...payload,
+    images: [],
           collection_ids: selectedCollections,
           variant_options: variantOptions.filter((o) => o.name && o.values.length > 0).map((o) => ({
             option_name: o.name,

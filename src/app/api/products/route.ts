@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { validateCsrf, csrfErrorResponse } from "@/lib/csrf";
+import { fetchWithCsrf } from "@/hooks/use-csrf";
 import { z } from "zod";
 
 // ====== ZOD SCHEMAS ======
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
   if (!validateCsrf(request)) {
     return csrfErrorResponse();
   }
-  
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
