@@ -136,10 +136,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ storeSlug: 
   };
 
   const handlePayment = async () => {
-    if (!razorpayLoaded || !window.Razorpay) {
-      setError("Payment gateway is loading. Please wait...");
-      return;
-    }
+  if (!storeSlug) {
+    setError("Store not loaded. Please refresh and try again.");
+    return;
+  }
+  if (!razorpayLoaded || !window.Razorpay) {
+    setError("Payment gateway is loading. Please wait...");
+    return;
+  }
 
     setLoading(true);
     setError("");

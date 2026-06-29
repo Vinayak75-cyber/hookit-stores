@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
       .eq("store_id", store.id)
       .single();
 
-    if (!paymentSettings?.is_connected || !paymentSettings.razorpay_key_id || !paymentSettings.razorpay_key_secret) {
+    if (!paymentSettings?.razorpay_key_id || !paymentSettings.razorpay_key_secret) {
       return NextResponse.json(
         { error: "Razorpay not configured for this store" },
         { status: 400 }
