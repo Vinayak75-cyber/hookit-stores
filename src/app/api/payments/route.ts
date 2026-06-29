@@ -106,8 +106,13 @@ export async function POST(request: NextRequest) {
   };
 
   // Encrypt secret before saving
+    // Encrypt secret before saving
   if (body.razorpay_key_secret && body.razorpay_key_secret !== "••••••••••••") {
-    updateData.razorpay_key_secret = encrypt(body.razorpay_key_secret.trim());
+    console.log("🔐 ENCRYPTION_KEY present:", !!ENCRYPTION_KEY, "length:", ENCRYPTION_KEY?.length);
+    console.log("🔐 About to encrypt secret starting with:", body.razorpay_key_secret.substring(0, 10));
+    const encrypted = encrypt(body.razorpay_key_secret.trim());
+    console.log("🔐 Encrypted result starts with:", encrypted.substring(0, 20));
+    updateData.razorpay_key_secret = encrypted;
   }
 
   const { error } = await supabase
