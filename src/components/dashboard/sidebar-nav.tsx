@@ -61,15 +61,18 @@ export function SidebarNav({ storeSlug }: { storeSlug: string }) {
           <ExternalLink className="w-4 h-4 text-[#999999]" />
           View Store
         </Link>
-        <form action="/auth/signout" method="post">
-          <button
-            type="submit"
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </form>
+            <button
+              onClick={async () => {
+                const { createClient } = await import("@/lib/supabase-client");
+                const supabase = createClient();
+                await supabase.auth.signOut();
+                window.location.href = "/login";
+              }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              Sign out
+            </button>
       </div>
     </div>
   );
@@ -167,15 +170,18 @@ export function MobileSidebarDrawer({
               <ExternalLink className="w-5 h-5 text-[#999999]" />
               View Store
             </Link>
-            <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
-              >
-                <LogOut className="w-5 h-5" />
-                Sign out
-              </button>
-            </form>
+        <button
+          onClick={async () => {
+            const { createClient } = await import("@/lib/supabase-client");
+            const supabase = createClient();
+            await supabase.auth.signOut();
+            window.location.href = "/login";
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </button>
           </div>
         </div>
       </div>
