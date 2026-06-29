@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { escapeHtml } from "../../lib/sanitize";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -442,7 +443,7 @@ export default function StorefrontPage({ params }: { params: Promise<{ storeSlug
                 {store.name}
               </h1>
               <p className="text-white/80 text-base max-w-lg mx-auto mb-6">
-                {store.description || "Discover amazing products"}
+                 {escapeHtml(store.description) || "Discover amazing products"}
               </p>
 
               <Link
@@ -467,7 +468,7 @@ export default function StorefrontPage({ params }: { params: Promise<{ storeSlug
             {store.name}
           </h1>
           <p className="text-[#888888] max-w-lg mx-auto">
-            {store.description || "Discover amazing products"}
+            {escapeHtml(store.description) || "Discover amazing products"}
           </p>
         </div>
       )}

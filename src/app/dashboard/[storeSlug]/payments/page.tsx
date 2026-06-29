@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { fetchWithCsrf } from "@/hooks/use-csrf";
 import {
   ArrowLeft,
   CreditCard,
@@ -120,7 +121,7 @@ export default function PaymentSettingsPage({ params }: { params: Promise<{ stor
         updateData.razorpay_key_secret = form.razorpay_key_secret.trim();
       }
 
-      const response = await fetch("/api/payments", {
+      const response = await fetchWithCsrf("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),

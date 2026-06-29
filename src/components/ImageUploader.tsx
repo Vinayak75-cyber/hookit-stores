@@ -3,6 +3,7 @@
 
 import { useState, useCallback } from "react";
 import imageCompression from "browser-image-compression";
+import { fetchWithCsrf } from "@/hooks/use-csrf";
 
 interface ImageUploaderProps {
   type: "logo" | "banner" | "product";
@@ -10,47 +11,54 @@ interface ImageUploaderProps {
   currentUrl?: string;
 }
 
+// Frontend validation constants (defense in depth — server validates too)
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
 export default function ImageUploader({ type, onUpload, currentUrl }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+
+  const validateFile = (file: File): string | null => {
+    // Check file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return `File too large. Maximum size is ${MAX_FILE_SIZE_MB}MB`;
+    }
+    // Check MIME type (first line of defense — server does magic bytes)
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      return "Only JPEG, PNG, WEBP, and GIF files are allowed";
+    }
+    return null;
+  };
 
   const handleFile = useCallback(async (file: File) => {
     setError("");
     setUploading(true);
 
     try {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        throw new Error("Please upload an image file");
+      // 1. Frontend validation (UX only — server enforces real rules)
+      const validationError = validateFile(file);
+      if (validationError) {
+        throw new Error(validationError);
       }
 
-      // Validate file size (max 10MB before compression)
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error("File too large. Max 10MB");
-      }
-
-      // Compression options based on type
+      // 2. Compression options based on type
       const options = {
-        logo: { maxWidthOrHeight: 400, useWebWorker: true, maxSizeMB: 0.5 },
-        banner: { maxWidthOrHeight: 1920, useWebWorker: true, maxSizeMB: 1 },
-        product: { maxWidthOrHeight: 1200, useWebWorker: true, maxSizeMB: 1 },
+        logo: { maxWidthOrHeight: 400, useWebWorker: true, maxSizeMB: 0.5, fileType: "image/webp" },
+        banner: { maxWidthOrHeight: 1920, useWebWorker: true, maxSizeMB: 1, fileType: "image/webp" },
+        product: { maxWidthOrHeight: 1200, useWebWorker: true, maxSizeMB: 1, fileType: "image/webp" },
       }[type];
 
-      // Compress in browser
+      // 3. Compress in browser
       const compressedFile = await imageCompression(file, options);
 
-      // Create unique filename
-      const ext = compressedFile.name.split(".").pop() || "webp";
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).substring(2, 8);
-      const fileName = `${type}/${timestamp}-${random}.${ext}`;
-
-      // Upload to API
+      // 4. Upload to API — server handles filename, validation, everything
       const formData = new FormData();
       formData.append("file", compressedFile);
-      formData.append("fileName", fileName);
+      formData.append("type", type); // Server uses this for folder path only
 
-      const res = await fetch("/api/upload", {
+      const res = await fetchWithCsrf("/api/upload", {
         method: "POST",
         body: formData,
       });
@@ -85,7 +93,7 @@ export default function ImageUploader({ type, onUpload, currentUrl }: ImageUploa
       >
         <input
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/gif"
           onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
           className="hidden"
           id={`upload-${type}`}

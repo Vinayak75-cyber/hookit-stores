@@ -2,7 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-const SECRET_KEY = process.env.BILLING_SECRET_KEY || "hookit-billing-2026";
+const SECRET_KEY = process.env.BILLING_SECRET_KEY;
+if (!SECRET_KEY) {
+  throw new Error("BILLING_SECRET_KEY not configured");
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

@@ -2,8 +2,27 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { z } from "zod";
 
-// Encryption config
+// ====== ZOD SCHEMAS ======
+
+const SavePaymentSettingsSchema = z.object({
+  store_id: z.string().uuid("Invalid store ID"),
+  razorpay_key_id: z.string().max(200).optional().nullable(),
+  razorpay_key_secret: z.string().max(500).optional().nullable(),
+  currency: z.enum(["INR", "USD", "EUR", "GBP"]).default("INR"),
+  test_mode: z.boolean().default(true),
+});
+
+const StoreSlugParamSchema = z.object({
+  store_slug: z.string()
+    .min(1)
+    .max(50)
+    .regex(/^[a-z0-9-]+$/, "Invalid slug format"),
+});
+
+// ====== ENCRYPTION ======
+
 const ENCRYPTION_KEY = process.env.PAYMENT_ENCRYPTION_KEY!;
 const ALGORITHM = "aes-256-gcm";
 
@@ -13,39 +32,36 @@ if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
 
 function encrypt(text: string): string {
   if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) return text;
-  
+
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY), iv);
-  
+
   let encrypted = cipher.update(text, "utf8", "hex");
   encrypted += cipher.final("hex");
-  
+
   const authTag = cipher.getAuthTag();
-  
-  // Format: iv:authTag:encrypted
+
   return `${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted}`;
 }
 
 function decrypt(encryptedText: string): string | null {
   if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) return encryptedText;
-  
-  // Check if already encrypted (has : separators)
-  if (!encryptedText.includes(":")) return encryptedText; // Plain text fallback
-  
+  if (!encryptedText.includes(":")) return encryptedText;
+
   try {
     const [ivHex, authTagHex, encrypted] = encryptedText.split(":");
-    
+
     const decipher = crypto.createDecipheriv(
       ALGORITHM,
       Buffer.from(ENCRYPTION_KEY),
       Buffer.from(ivHex, "hex")
     );
-    
+
     decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
-    
+
     let decrypted = decipher.update(encrypted, "hex", "utf8");
     decrypted += decipher.final("utf8");
-    
+
     return decrypted;
   } catch (err) {
     console.error("❌ Decryption failed:", err);
@@ -53,7 +69,8 @@ function decrypt(encryptedText: string): string | null {
   }
 }
 
-// Helper to get supabase client
+// ====== SUPABASE CLIENT ======
+
 async function getSupabase() {
   const cookieStore = await cookies();
   return createServerClient(
@@ -74,7 +91,8 @@ async function getSupabase() {
   );
 }
 
-// POST — Save payment settings (dashboard)
+// ====== POST — Save payment settings ======
+
 export async function POST(request: NextRequest) {
   const supabase = await getSupabase();
 
@@ -83,35 +101,45 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json();
+  // Parse and validate body
+  let body: z.infer<typeof SavePaymentSettingsSchema>;
+  try {
+    const rawBody = await request.json();
+    body = SavePaymentSettingsSchema.parse(rawBody);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: err.issues },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
+  // Verify store ownership
   const { data: store } = await supabase
     .from("stores")
-    .select("id")
+    .select("id, user_id")
     .eq("id", body.store_id)
-    .eq("user_id", user.id)
     .single();
 
-  if (!store) {
+  if (!store || store.user_id !== user.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const updateData: any = {
+  // Build update data with ONLY validated fields
+  const updateData: Record<string, any> = {
     store_id: body.store_id,
     razorpay_key_id: body.razorpay_key_id?.trim() || null,
-    currency: body.currency || "INR",
-    test_mode: body.test_mode ?? true,
+    currency: body.currency,
+    test_mode: body.test_mode,
     is_connected: !!body.razorpay_key_id,
     updated_at: new Date().toISOString(),
   };
 
   // Encrypt secret before saving
-    // Encrypt secret before saving
   if (body.razorpay_key_secret && body.razorpay_key_secret !== "••••••••••••") {
-    console.log("🔐 ENCRYPTION_KEY present:", !!ENCRYPTION_KEY, "length:", ENCRYPTION_KEY?.length);
-    console.log("🔐 About to encrypt secret starting with:", body.razorpay_key_secret.substring(0, 10));
     const encrypted = encrypt(body.razorpay_key_secret.trim());
-    console.log("🔐 Encrypted result starts with:", encrypted.substring(0, 20));
     updateData.razorpay_key_secret = encrypted;
   }
 
@@ -126,21 +154,29 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ success: true });
 }
 
-// GET — Fetch payment settings for a store (used by checkout to get key_id)
+// ====== GET — Fetch payment settings ======
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const storeSlug = searchParams.get("store_slug");
+  const rawStoreSlug = searchParams.get("store_slug");
 
-  if (!storeSlug) {
-    return NextResponse.json({ error: "store_slug required" }, { status: 400 });
+  // Validate store_slug parameter
+  const paramValidation = StoreSlugParamSchema.safeParse({ store_slug: rawStoreSlug });
+  if (!paramValidation.success) {
+    return NextResponse.json(
+      { error: "Invalid store_slug", details: paramValidation.error.issues },
+      { status: 400 }
+    );
   }
+
+  const { store_slug } = paramValidation.data;
 
   const supabase = await getSupabase();
 
   const { data: store } = await supabase
     .from("stores")
     .select("id")
-    .eq("slug", storeSlug)
+    .eq("slug", store_slug)
     .eq("is_active", true)
     .single();
 
@@ -158,13 +194,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Payment not configured" }, { status: 400 });
   }
 
-  // Decrypt secret for server-side use (e.g., creating Razorpay orders)
+  // Decrypt secret for server-side use
   const decryptedSecret = decrypt(settings.razorpay_key_secret);
 
-  // Return ONLY the public key_id, never the secret
   return NextResponse.json({
     razorpay_key_id: settings.razorpay_key_id,
-    razorpay_key_secret: decryptedSecret, // Server-side only — needed for order creation
+    razorpay_key_secret: decryptedSecret,
     currency: settings.currency || "INR",
     test_mode: settings.test_mode,
   });

@@ -28,6 +28,25 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    // 🔒 AUTHORIZATION: Verify user owns the store
+    if (!storeId) {
+      return NextResponse.json({ error: 'store_id is required' }, { status: 400 });
+    }
+
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('user_id')
+      .eq('id', storeId)
+      .single();
+
+    if (storeError || !store) {
+      return NextResponse.json({ error: 'Store not found' }, { status: 404 });
+    }
+
+    if (store.user_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { data, error } = await supabase
       .from('analytics')
       .select('*')

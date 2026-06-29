@@ -2,7 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-const SECRET_KEY = process.env.BILLING_SECRET_KEY || "hookit-billing-2026";
+const SECRET_KEY = process.env.BILLING_SECRET_KEY;
+if (!SECRET_KEY) {
+  throw new Error("BILLING_SECRET_KEY not configured");
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -87,13 +90,13 @@ export async function GET(request: NextRequest) {
       // Bill ALL non-cancelled, non-refunded orders — not just "paid" ones
       const { data: orders, error: ordersError } = await supabase
         .from("orders")
-.select("subtotal, gst_amount")
-.eq("store_id", store.id)
-.neq("status", "cancelled")
-.neq("status", "refunded")
-.gt("subtotal", 0)  // Exclude orders with 0 subtotal
-.gte("created_at", billMonth.toISOString())
-.lte("created_at", billMonthEnd.toISOString());
+        .select("subtotal, gst_amount")
+        .eq("store_id", store.id)
+        .neq("status", "cancelled")
+        .neq("status", "refunded")
+        .gt("subtotal", 0)  // Exclude orders with 0 subtotal
+        .gte("created_at", billMonth.toISOString())
+        .lte("created_at", billMonthEnd.toISOString());
 
       if (ordersError) {
         errors.push(`Store ${store.id}: ${ordersError.message}`);

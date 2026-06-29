@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { escapeHtml } from "@/lib/sanitize";
 import {
   ShoppingBag, ArrowLeft, Heart, Share2, Truck, Shield, RotateCcw,
   Check, Package, Star, Ruler, Weight, Tag, Layers, FileText,
@@ -333,7 +334,7 @@ export default async function ProductDetailPage({
             {product.description && (
               <div className="border-t border-[#e5e5e5] pt-6">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-[#888888] mb-3 flex items-center gap-2"><Info className="w-4 h-4" />Description</h3>
-                <p className="text-[#666666] leading-relaxed whitespace-pre-wrap">{product.description}</p>
+                <p className="text-[#666666] leading-relaxed whitespace-pre-wrap">{escapeHtml(product.description)}</p>
               </div>
             )}
 
