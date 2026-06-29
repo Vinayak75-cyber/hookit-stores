@@ -2,7 +2,34 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
+import crypto from "crypto";
 
+// ====== ENCRYPTION UTILS ======
+const ENCRYPTION_KEY = process.env.PAYMENT_ENCRYPTION_KEY;
+const ALGORITHM = "aes-256-gcm";
+
+function decrypt(encryptedText: string): string | null {
+  if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) return encryptedText;
+  if (!encryptedText.includes(":")) return encryptedText; // Plain text fallback
+
+  try {
+    const [ivHex, authTagHex, encrypted] = encryptedText.split(":");
+    const decipher = crypto.createDecipheriv(
+      ALGORITHM,
+      Buffer.from(ENCRYPTION_KEY),
+      Buffer.from(ivHex, "hex")
+    );
+    decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
+    let decrypted = decipher.update(encrypted, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+  } catch (err) {
+    console.error("❌ Decryption failed:", err);
+    return null;
+  }
+}
+
+// ====== SUPABASE CLIENT ======
 async function getSupabase() {
   const cookieStore = await cookies();
   return createServerClient(
@@ -23,6 +50,7 @@ async function getSupabase() {
   );
 }
 
+// ====== ANALYTICS ======
 async function updateAnalytics(supabase: any, storeId: string, orderAmount: number) {
   const today = new Date().toISOString().split("T")[0];
   
@@ -54,6 +82,7 @@ async function updateAnalytics(supabase: any, storeId: string, orderAmount: numb
   }
 }
 
+// ====== GET — Fetch orders (dashboard) ======
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const storeId = searchParams.get("store_id");
@@ -105,52 +134,29 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ orders: orders || [] });
 }
 
+// ====== POST — Create order (checkout) ======
 export async function POST(request: NextRequest) {
   const supabase = await getSupabase();
   const body = await request.json();
 
-  console.log("🔥 [Orders API] Full request body:", JSON.stringify(body, null, 2));
-
   try {
-    // Try to find store by ID first, then by slug as fallback
-    let store = null;
-    
-    if (body.store_id) {
-      const { data } = await supabase
-        .from("stores")
-        .select("id, name, slug")
-        .eq("id", body.store_id)
-        .maybeSingle();
-      store = data;
-      console.log("🔥 [Orders API] Lookup by store_id:", body.store_id, "result:", store);
-    }
-    
-    // Fallback: lookup by slug if store_id failed or wasn't provided
-    if (!store && body.store_slug) {
-      const { data } = await supabase
-        .from("stores")
-        .select("id, name, slug")
-        .ilike("slug", body.store_slug)
-        .eq("is_active", true)
-        .maybeSingle();
-      store = data;
-      console.log("🔥 [Orders API] Fallback lookup by slug:", body.store_slug, "result:", store);
-    }
+    // 1. Get store
+    const { data: store } = await supabase
+      .from("stores")
+      .select("id, name, slug")
+      .eq("id", body.store_id)
+      .maybeSingle();
 
     if (!store) {
-      console.log("🔥 [Orders API] Store not found. body:", body);
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
-    console.log("🔥 [Orders API] Found store:", store);
-
-    const { data: paymentSettings, error: paymentError } = await supabase
+    // 2. Get payment settings
+    const { data: paymentSettings } = await supabase
       .from("payment_settings")
       .select("razorpay_key_id, razorpay_key_secret, currency, test_mode, is_connected")
       .eq("store_id", store.id)
       .maybeSingle();
-
-    console.log("🔥 [Orders API] Payment settings:", { paymentSettings, paymentError });
 
     if (!paymentSettings?.razorpay_key_id || !paymentSettings.razorpay_key_secret) {
       return NextResponse.json(
@@ -159,12 +165,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ... rest stays the same
+    // 3. DECRYPT the secret
+    const decryptedSecret = decrypt(paymentSettings.razorpay_key_secret);
+    if (!decryptedSecret) {
+      return NextResponse.json(
+        { error: "Failed to decrypt payment secret" },
+        { status: 500 }
+      );
+    }
 
-    // 2. Create Razorpay Order
+    // 4. Create Razorpay Order with decrypted secret
     const razorpay = new Razorpay({
       key_id: paymentSettings.razorpay_key_id,
-      key_secret: paymentSettings.razorpay_key_secret,
+      key_secret: decryptedSecret,
     });
 
     const amountInPaise = Math.round(body.total_amount * 100);
@@ -179,7 +192,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // 3. Insert order into DB with razorpay_order_id
+    // 5. Insert order into DB
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -208,7 +221,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: orderError.message }, { status: 500 });
     }
 
-    // 4. Insert order items
+    // 6. Insert order items
     if (body.order_items && body.order_items.length > 0) {
       const { error: itemsError } = await supabase
         .from("order_items")
@@ -236,10 +249,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Update analytics
+    // 7. Update analytics
     await updateAnalytics(supabase, body.store_id, body.total_amount || 0);
 
-    // 6. Return order + Razorpay order_id to frontend
+    // 8. Return to frontend
     return NextResponse.json({
       order,
       razorpay_order_id: razorpayOrder.id,

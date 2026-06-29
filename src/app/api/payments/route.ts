@@ -1,9 +1,59 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
+import crypto from "crypto";
 
-// Helper to get supabase client (reused)
+// Encryption config
+const ENCRYPTION_KEY = process.env.PAYMENT_ENCRYPTION_KEY!;
+const ALGORITHM = "aes-256-gcm";
+
+if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
+  console.warn("⚠️ PAYMENT_ENCRYPTION_KEY not set or invalid. Generate one with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"");
+}
+
+function encrypt(text: string): string {
+  if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) return text;
+  
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY), iv);
+  
+  let encrypted = cipher.update(text, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  
+  const authTag = cipher.getAuthTag();
+  
+  // Format: iv:authTag:encrypted
+  return `${iv.toString("hex")}:${authTag.toString("hex")}:${encrypted}`;
+}
+
+function decrypt(encryptedText: string): string | null {
+  if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) return encryptedText;
+  
+  // Check if already encrypted (has : separators)
+  if (!encryptedText.includes(":")) return encryptedText; // Plain text fallback
+  
+  try {
+    const [ivHex, authTagHex, encrypted] = encryptedText.split(":");
+    
+    const decipher = crypto.createDecipheriv(
+      ALGORITHM,
+      Buffer.from(ENCRYPTION_KEY),
+      Buffer.from(ivHex, "hex")
+    );
+    
+    decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
+    
+    let decrypted = decipher.update(encrypted, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+    
+    return decrypted;
+  } catch (err) {
+    console.error("❌ Decryption failed:", err);
+    return null;
+  }
+}
+
+// Helper to get supabase client
 async function getSupabase() {
   const cookieStore = await cookies();
   return createServerClient(
@@ -55,9 +105,9 @@ export async function POST(request: NextRequest) {
     updated_at: new Date().toISOString(),
   };
 
-  // Only update secret if it was changed (not masked)
+  // Encrypt secret before saving
   if (body.razorpay_key_secret && body.razorpay_key_secret !== "••••••••••••") {
-    updateData.razorpay_key_secret = body.razorpay_key_secret.trim();
+    updateData.razorpay_key_secret = encrypt(body.razorpay_key_secret.trim());
   }
 
   const { error } = await supabase
@@ -95,7 +145,7 @@ export async function GET(request: NextRequest) {
 
   const { data: settings } = await supabase
     .from("payment_settings")
-    .select("razorpay_key_id, currency, test_mode, is_connected")
+    .select("razorpay_key_id, razorpay_key_secret, currency, test_mode, is_connected")
     .eq("store_id", store.id)
     .single();
 
@@ -103,9 +153,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Payment not configured" }, { status: 400 });
   }
 
+  // Decrypt secret for server-side use (e.g., creating Razorpay orders)
+  const decryptedSecret = decrypt(settings.razorpay_key_secret);
+
   // Return ONLY the public key_id, never the secret
   return NextResponse.json({
     razorpay_key_id: settings.razorpay_key_id,
+    razorpay_key_secret: decryptedSecret, // Server-side only — needed for order creation
     currency: settings.currency || "INR",
     test_mode: settings.test_mode,
   });
