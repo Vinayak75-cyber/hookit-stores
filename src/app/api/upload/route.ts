@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Ratelimit } from "@upstash/ratelimit";
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf";
 import { Redis } from "@upstash/redis";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
@@ -110,6 +111,11 @@ async function scanForMalware(_buffer: Buffer): Promise<{ clean: boolean; reason
 // ====== MAIN HANDLER ======
 
 export async function POST(request: NextRequest) {
+
+  if (!validateCsrf(request)) {
+  return csrfErrorResponse();
+}
+
   // 🔒 RATE LIMITING
   const ip = getIP(request);
   const { success, limit, remaining, reset } = await ratelimit.limit(ip);

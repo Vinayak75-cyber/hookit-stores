@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import { z } from "zod";
@@ -186,6 +187,11 @@ export async function GET(request: NextRequest) {
 // ====== POST — Create order ======
 
 export async function POST(request: NextRequest) {
+
+  if (!validateCsrf(request)) {
+  return csrfErrorResponse();
+}
+
   const supabase = await getSupabase();
 
   // Parse and validate body

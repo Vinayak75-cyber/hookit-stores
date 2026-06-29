@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { fetchWithCsrf } from "@/hooks/use-csrf";
 import { use } from "react";
 import { createClient } from "@/lib/supabase";
 import {
@@ -140,7 +141,7 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
     setError("");
 
     try {
-      const orderRes = await fetch("/api/billing/pay", {
+      const orderRes = await fetchWithCsrf("/api/billing/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ billId: bill.id }),
@@ -164,7 +165,7 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
         })}`,
         order_id: orderData.orderId,
         handler: async function (response: any) {
-          const verifyRes = await fetch("/api/billing/verify", {
+          const verifyRes = await fetchWithCsrf("/api/billing/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -209,7 +210,7 @@ export default function BillingPage({ params }: { params: Promise<{ storeSlug: s
     setError("");
 
     try {
-      const res = await fetch("/api/billing/upgrade", {
+      const res = await fetchWithCsrf("/api/billing/upgrade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ storeSlug, plan: planId }),

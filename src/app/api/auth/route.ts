@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 
 export async function POST(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -56,7 +57,13 @@ export async function GET(request: NextRequest) {
 
   if (action === "session") {
     const { data: { user } } = await supabase.auth.getUser();
-    return NextResponse.json({ user });
+
+    // 🔒 CSRF: Generate fresh CSRF token for authenticated session
+    const response = NextResponse.json({ user });
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(response, csrfToken);
+
+    return response;
   }
 
   return NextResponse.json({ error: "Invalid action" }, { status: 400 });

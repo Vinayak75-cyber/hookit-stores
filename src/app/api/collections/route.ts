@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -93,6 +94,11 @@ export async function GET(request: NextRequest) {
 // ====== POST ======
 
 export async function POST(request: NextRequest) {
+
+  if (!validateCsrf(request)) {
+  return csrfErrorResponse();
+}
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

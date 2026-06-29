@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf";
 import crypto from "crypto";
 
 // Lazy-init Resend only when needed
@@ -231,6 +232,12 @@ async function sendCustomerConfirmationEmail(
 }
 
 export async function POST(request: NextRequest) {
+
+  // 🔒 CSRF VALIDATION
+  if (!validateCsrf(request)) {
+    return csrfErrorResponse();
+  }
+  
   try {
     const body = await request.json();
 

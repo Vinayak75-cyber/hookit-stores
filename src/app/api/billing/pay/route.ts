@@ -5,6 +5,7 @@ import Razorpay from "razorpay";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { z } from "zod";
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf";
 
 // ====== ZOD SCHEMAS ======
 
@@ -44,6 +45,11 @@ const razorpay = new Razorpay({
 // ====== POST ======
 
 export async function POST(request: NextRequest) {
+  // 🔒 CSRF VALIDATION
+  if (!validateCsrf(request)) {
+    return csrfErrorResponse();
+  }
+
   // Rate limiting
   const ip = getIP(request);
   const { success, limit, remaining, reset } = await ratelimit.limit(ip);

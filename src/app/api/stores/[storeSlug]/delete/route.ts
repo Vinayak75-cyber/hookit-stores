@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf";
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ storeSlug: string }> }
 ) {
+
+  if (!validateCsrf(request)) {
+  return csrfErrorResponse();
+}
+
   const { storeSlug } = await params;
   const cookieStore = await cookies();
 

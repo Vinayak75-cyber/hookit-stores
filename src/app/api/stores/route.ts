@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
+import { validateCsrf, csrfErrorResponse } from "@/lib/csrf";
 import { Redis } from "@upstash/redis";
 
 // ====== ZOD SCHEMAS ======
@@ -101,6 +102,11 @@ export async function GET(request: NextRequest) {
 // ====== POST ======
 
 export async function POST(request: NextRequest) {
+
+  if (!validateCsrf(request)) {
+  return csrfErrorResponse();
+}
+
   // Rate limiting
   const ip = getIP(request);
   const { success, limit, remaining } = await ratelimit.limit(ip);

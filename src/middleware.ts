@@ -32,10 +32,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
-          });
-          supabaseResponse = NextResponse.next({ request });
+          // 🔒 FIX: Don't recreate response — just set cookies on existing one
           cookiesToSet.forEach(({ name, value, options }) => {
             supabaseResponse.cookies.set(name, value, options);
           });
@@ -52,13 +49,6 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const hostname = request.headers.get("host") || "";
   const cleanHost = hostname.replace(/^www\./, "");
-
-  // 🔒 CSRF: Generate/set CSRF token cookie if not present
-  const existingCsrf = request.cookies.get("csrf_token")?.value;
-  if (!existingCsrf) {
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(supabaseResponse, csrfToken);
-  }
 
   // ===== SUBDOMAIN ROUTING =====
   const isMainDomain =
@@ -103,37 +93,51 @@ export async function middleware(request: NextRequest) {
     if (pathParts.length > 0) {
       const storeSlug = pathParts[0];
       const baseUrl = request.nextUrl.origin;
-      fetch(`${baseUrl}/api/analytics/track`, {
+      const trackPromise = fetch(`${baseUrl}/api/analytics/track`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ storeSlug }),
       }).catch(() => {});
+      
+      if ((request as any).waitUntil) {
+        (request as any).waitUntil(trackPromise);
+      }
     }
   }
 
-  // 🔒 SECURITY HEADERS
-  const securityHeaders = {
-    "X-DNS-Prefetch-Control": "on",
-    "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(self)",
-    "Content-Security-Policy":
-      "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com; " +
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-      "font-src 'self' https://fonts.gstatic.com; " +
-      "img-src 'self' data: https: blob:; " +
-      "connect-src 'self' https://*.supabase.co https://api.razorpay.com; " +
-      "frame-src https://checkout.razorpay.com; " +
-      "upgrade-insecure-requests;",
-  };
+  // 🔒 CSRF: Generate/set CSRF token cookie if not present
+  // 🔒 FIX: Do this AFTER all Supabase operations so it survives setAll calls
+  const existingCsrf = request.cookies.get("csrf_token")?.value;
+  if (!existingCsrf) {
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(supabaseResponse, csrfToken);
+  }
 
-  Object.entries(securityHeaders).forEach(([key, value]) => {
-    supabaseResponse.headers.set(key, value);
-  });
+  // 🔒 SECURITY HEADERS (skip for API routes)
+  if (!pathname.startsWith("/api/")) {
+    const securityHeaders = {
+      "X-DNS-Prefetch-Control": "on",
+      "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "X-XSS-Protection": "1; mode=block",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(self)",
+      "Content-Security-Policy":
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com; " +
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+        "font-src 'self' https://fonts.gstatic.com; " +
+        "img-src 'self' data: https: blob:; " +
+        "connect-src 'self' https://*.supabase.co https://api.razorpay.com; " +
+        "frame-src https://checkout.razorpay.com; " +
+        "upgrade-insecure-requests;",
+    };
+
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      supabaseResponse.headers.set(key, value);
+    });
+  }
 
   return supabaseResponse;
 }
