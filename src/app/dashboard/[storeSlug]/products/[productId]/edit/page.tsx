@@ -1263,7 +1263,7 @@ export default function EditProductPage({
       const fileName = `${storeSlug}/${pid}/${Date.now()}-${i}.webp`;
       const fd = new FormData();
       fd.append("file", compressedFile);
-      fd.append("fileName", fileName);
+      fd.append("type", "product");
       const getCsrfToken = () => {
         const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));
         return match ? match[2] : '';

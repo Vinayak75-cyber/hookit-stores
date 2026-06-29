@@ -1169,7 +1169,7 @@ export default function AddProductPage({ params }: { params: Promise<{ storeSlug
       const fileName = `${storeSlug}/${productId}/${Date.now()}-${i}.webp`;
       const formData = new FormData();
       formData.append("file", compressedFile);
-      formData.append("fileName", fileName);
+      formData.append("type", "product");
 
       const getCsrfToken = () => {
         const match = document.cookie.match(new RegExp('(^| )csrf_token=([^;]+)'));

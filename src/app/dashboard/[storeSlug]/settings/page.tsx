@@ -213,7 +213,7 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
     const fileName = `${storeSlug}/${type}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.webp`;
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("fileName", fileName);
+    formData.append("type", type);  // "logo" or "banner"
 
     const res = await fetch("/api/upload", {
       method: "POST",
