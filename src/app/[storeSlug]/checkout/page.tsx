@@ -609,7 +609,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ storeSlug: 
 
             <button
               onClick={handlePayment}
-              disabled={loading || !razorpayLoaded}
+              disabled={loading || !razorpayLoaded || !storeSlug}
               className="w-full bg-[#1a1a1a] text-white font-semibold py-4 rounded-xl hover:bg-[#333333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
