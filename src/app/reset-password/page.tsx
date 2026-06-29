@@ -17,11 +17,18 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash.includes("type=recovery")) {
-      router.push("/login");
-    }
-  }, [router]);
+  // Supabase will automatically set the session from the code in the URL
+  // Just wait a moment for it to process
+  const timer = setTimeout(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.push("/login");
+      }
+    });
+  }, 500);
+
+  return () => clearTimeout(timer);
+}, [router, supabase]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
