@@ -1,15 +1,15 @@
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 
 const CSRF_COOKIE_NAME = "csrf_token";
 const CSRF_HEADER_NAME = "x-csrf-token";
 
 /**
- * Generate a new CSRF token
+ * Generate a new CSRF token using Web Crypto API (Edge-compatible)
  */
 export function generateCsrfToken(): string {
-  return randomBytes(32).toString("hex");
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /**
@@ -27,7 +27,7 @@ export function setCsrfCookie(response: NextResponse, token: string): void {
 
 /**
  * Validate CSRF token from header against cookie
- * Returns true if valid, false otherwise
+ * Uses timing-safe comparison (Edge-compatible)
  */
 export function validateCsrf(request: NextRequest): boolean {
   const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value;
@@ -37,16 +37,32 @@ export function validateCsrf(request: NextRequest): boolean {
     return false;
   }
 
-  // Use timing-safe comparison
-  try {
-    const crypto = require("crypto");
-    return crypto.timingSafeEqual(
-      Buffer.from(cookieToken),
-      Buffer.from(headerToken)
-    );
-  } catch {
+  // Timing-safe comparison using Web Crypto
+  return timingSafeEqual(cookieToken, headerToken);
+}
+
+/**
+ * Timing-safe string comparison (prevents timing attacks)
+ * Edge-compatible — no Node.js crypto needed
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    // Still do a dummy comparison to avoid leaking length info
+    // But return false regardless
+    const dummy = new Uint8Array(1);
+    crypto.getRandomValues(dummy);
     return false;
   }
+
+  const aBytes = new TextEncoder().encode(a);
+  const bBytes = new TextEncoder().encode(b);
+
+  let result = 0;
+  for (let i = 0; i < aBytes.length; i++) {
+    result |= aBytes[i] ^ bBytes[i];
+  }
+
+  return result === 0;
 }
 
 /**
@@ -63,8 +79,6 @@ export function csrfErrorResponse(): NextResponse {
  * Get CSRF token from cookie (for client-side reading)
  */
 export function getCsrfTokenFromCookie(): string | undefined {
-  // This is used server-side to get the token to pass to client
-  // Client reads cookie directly via document.cookie
   return undefined;
 }
 

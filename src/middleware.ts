@@ -1,12 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { generateCsrfToken, setCsrfCookie } from "@/lib/csrf";
 
 const EXCLUDED_ANALYTICS_PATHS = [
   "/dashboard", "/api", "/login", "/signup", "/onboarding",
   "/create-store", "/auth", "/_next", "/favicon.ico",
 ];
 
-// 🔒 SECURITY: Validate redirect URLs are relative and safe
 function isValidRedirect(url: string): boolean {
   if (!url.startsWith("/")) return false;
   if (url.startsWith("//")) return false;
@@ -52,6 +52,13 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const hostname = request.headers.get("host") || "";
   const cleanHost = hostname.replace(/^www\./, "");
+
+  // 🔒 CSRF: Generate/set CSRF token cookie if not present
+  const existingCsrf = request.cookies.get("csrf_token")?.value;
+  if (!existingCsrf) {
+    const csrfToken = generateCsrfToken();
+    setCsrfCookie(supabaseResponse, csrfToken);
+  }
 
   // ===== SUBDOMAIN ROUTING =====
   const isMainDomain =
