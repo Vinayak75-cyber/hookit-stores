@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
     setError("");
 
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `https://www.hookit.online/reset-password`,
+      redirectTo: `https://hookit.online/reset-password`,
     });
 
     setLoading(false);
