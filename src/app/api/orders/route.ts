@@ -109,23 +109,48 @@ export async function POST(request: NextRequest) {
   const supabase = await getSupabase();
   const body = await request.json();
 
+  console.log("🔥 [Orders API] Full request body:", JSON.stringify(body, null, 2));
+
   try {
-    // 1. Get store and payment settings
-    const { data: store } = await supabase
-      .from("stores")
-      .select("id, name, slug")
-      .eq("id", body.store_id)
-      .maybeSingle();
+    // Try to find store by ID first, then by slug as fallback
+    let store = null;
+    
+    if (body.store_id) {
+      const { data } = await supabase
+        .from("stores")
+        .select("id, name, slug")
+        .eq("id", body.store_id)
+        .maybeSingle();
+      store = data;
+      console.log("🔥 [Orders API] Lookup by store_id:", body.store_id, "result:", store);
+    }
+    
+    // Fallback: lookup by slug if store_id failed or wasn't provided
+    if (!store && body.store_slug) {
+      const { data } = await supabase
+        .from("stores")
+        .select("id, name, slug")
+        .ilike("slug", body.store_slug)
+        .eq("is_active", true)
+        .maybeSingle();
+      store = data;
+      console.log("🔥 [Orders API] Fallback lookup by slug:", body.store_slug, "result:", store);
+    }
 
     if (!store) {
+      console.log("🔥 [Orders API] Store not found. body:", body);
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
-    const { data: paymentSettings } = await supabase
+    console.log("🔥 [Orders API] Found store:", store);
+
+    const { data: paymentSettings, error: paymentError } = await supabase
       .from("payment_settings")
       .select("razorpay_key_id, razorpay_key_secret, currency, test_mode, is_connected")
       .eq("store_id", store.id)
       .maybeSingle();
+
+    console.log("🔥 [Orders API] Payment settings:", { paymentSettings, paymentError });
 
     if (!paymentSettings?.razorpay_key_id || !paymentSettings.razorpay_key_secret) {
       return NextResponse.json(
@@ -133,6 +158,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // ... rest stays the same
 
     // 2. Create Razorpay Order
     const razorpay = new Razorpay({

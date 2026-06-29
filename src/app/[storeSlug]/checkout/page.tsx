@@ -163,6 +163,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ storeSlug: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           store_id: store.id,
+          store_slug: storeSlug, 
           customer_name: form.name,
           customer_email: form.email,
           customer_phone: form.phone,
