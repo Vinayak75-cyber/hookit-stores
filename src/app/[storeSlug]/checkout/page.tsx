@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/stores/cart-store";
 import { createClient } from "@/lib/supabase";
+import { getCsrfHeaders } from "@/lib/csrf";
 import {
   ArrowLeft,
   ShoppingBag,
@@ -160,7 +161,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ storeSlug: 
       // 1. Create order via API (this creates Razorpay order + DB order)
       const response = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getCsrfHeaders(),
         body: JSON.stringify({
           store_id: store.id,
           store_slug: storeSlug, 
@@ -222,7 +223,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ storeSlug: 
           try {
             const verifyRes = await fetch("/api/payments/verify", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: getCsrfHeaders(),
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
