@@ -194,6 +194,7 @@ export async function GET(request: NextRequest) {
     .from("orders")
     .select("*, order_items(*)")
     .eq("store_id", store_id)
+    .neq("payment_status", "pending") 
     .order("created_at", { ascending: false });
 
   return NextResponse.json({ orders: orders || [] });
@@ -349,7 +350,7 @@ export async function POST(request: NextRequest) {
           platform_fee: item.platform_fee,
           gst_amount: item.gst_amount,
           custom_fields: item.custom_fields,
-          created_at: new Date().toISOString(),
+          created_at: new Date().toISOString(), 
         }))
       );
 

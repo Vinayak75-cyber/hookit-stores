@@ -53,7 +53,7 @@ async function getOrders(storeSlug: string, statusFilter?: string) {
 
   if (!store) return null;
 
-  let query = supabase
+    let query = supabase
     .from("orders")
     .select(`
       *,
@@ -75,6 +75,7 @@ async function getOrders(storeSlug: string, statusFilter?: string) {
       )
     `)
     .eq("store_id", store.id)
+    .neq("payment_status", "pending")   // <-- ADD THIS LINE
     .order("created_at", { ascending: false });
 
   if (statusFilter && statusFilter !== "all") {

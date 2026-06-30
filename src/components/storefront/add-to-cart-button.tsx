@@ -83,7 +83,7 @@ export function AddToCartButton({
         <button
           onClick={handleAdd}
           disabled={added}
-          className="flex-1 py-4 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
+          className="flex-1 py-4 text-white font-semibold text-m flex items-center justify-center gap-2 transition-all hover:opacity-90"
           style={{
             backgroundColor: added ? "#22c55e" : theme.primary_color,
             borderRadius: theme.border_radius,
@@ -96,7 +96,6 @@ export function AddToCartButton({
             </>
           ) : (
             <>
-              <ShoppingBag className="w-5 h-5" />
               Add to cart
             </>
           )}
@@ -105,13 +104,12 @@ export function AddToCartButton({
         {/* Buy Now */}
         <button
           onClick={handleBuyNow}
-          className="flex-1 py-4 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
+          className="flex-1 py-4 text-white font-semibold text-m flex items-center justify-center gap-2 transition-all hover:opacity-90"
           style={{
             backgroundColor: theme.accent_color || "#c9a96e",
             borderRadius: theme.border_radius,
           }}
         >
-          <Zap className="w-5 h-5" />
           Buy now
         </button>
       </div>

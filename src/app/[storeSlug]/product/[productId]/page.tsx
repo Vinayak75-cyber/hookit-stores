@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { ShareButton } from "@/components/storefront/share-button";
 import { escapeHtml } from "@/lib/sanitize";
 import {
   ShoppingBag, ArrowLeft, Heart, Share2, Truck, Shield, RotateCcw,
@@ -226,8 +227,7 @@ export default async function ProductDetailPage({
                   <h1 className="text-2xl md:text-3xl font-bold" style={{ color: theme.text_color }}>{product.name}</h1>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button className="p-2 rounded-full hover:bg-[#f5f5f5] transition-colors"><Heart className="w-5 h-5 text-[#666666]" /></button>
-                  <button className="p-2 rounded-full hover:bg-[#f5f5f5] transition-colors"><Share2 className="w-5 h-5 text-[#666666]" /></button>
+                  <ShareButton productName={product.name} storeName={store.name} />
                 </div>
               </div>
 
@@ -262,7 +262,7 @@ export default async function ProductDetailPage({
                 <div className="mt-2 p-3 rounded-xl bg-[#f8f8f8] text-xs text-[#666666] space-y-1">
                   <p className="font-medium text-[#1a1a1a]">Price breakdown:</p>
                   <div className="flex justify-between"><span>Base price</span><span>₹{product.price.toLocaleString()}</span></div>
-                  {shippingFee > 0 && <div className="flex justify-between"><span>Shipping</span><span>₹{shippingFee.toLocaleString()}</span></div>}
+                  {shippingFee > 0 && <div className="flex justify-between"><span>Shipping fee</span><span>₹{shippingFee.toLocaleString()}</span></div>}
                   {additionalFee > 0 && <div className="flex justify-between"><span>Additional fee</span><span>₹{additionalFee.toLocaleString()}</span></div>}
                   {platformFee > 0 && <div className="flex justify-between"><span>Platform fee</span><span>₹{platformFee.toLocaleString()}</span></div>}
                   <div className="flex justify-between font-medium text-[#1a1a1a] border-t border-[#e5e5e5] pt-1"><span>Total</span><span>₹{finalPrice.toLocaleString()}</span></div>
