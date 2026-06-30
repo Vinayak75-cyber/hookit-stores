@@ -113,7 +113,7 @@ export async function middleware(request: NextRequest) {
     setCsrfCookie(response, csrfToken);
   }
 
-  // 🔒 SECURITY HEADERS (skip for API routes)
+    // 🔒 SECURITY HEADERS (skip for API routes)
   if (!pathname.startsWith("/api/")) {
     const securityHeaders = {
       "X-DNS-Prefetch-Control": "on",
@@ -125,12 +125,13 @@ export async function middleware(request: NextRequest) {
       "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(self)",
       "Content-Security-Policy":
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com https://static.cloudflareinsights.com; " +
+        "script-src-elem 'self' 'unsafe-inline' https://checkout.razorpay.com https://cdn.razorpay.com https://static.cloudflareinsights.com; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
         "font-src 'self' https://fonts.gstatic.com; " +
         "img-src 'self' data: https: blob:; " +
-        "connect-src 'self' https://*.supabase.co https://api.razorpay.com; " +
-        "frame-src https://checkout.razorpay.com; " +
+        "connect-src 'self' https://*.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://*.razorpay.com; " +
+        "frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com; " +
         "upgrade-insecure-requests;",
     };
 
