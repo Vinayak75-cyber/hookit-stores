@@ -35,14 +35,9 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+        setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
-            response = NextResponse.next({
-              request: {
-                headers: request.headers,
-              },
-            });
             response.cookies.set(name, value, options);
           });
         },
@@ -102,15 +97,12 @@ export async function middleware(request: NextRequest) {
     if (pathParts.length > 0) {
       const storeSlug = pathParts[0];
       const baseUrl = request.nextUrl.origin;
-      const trackPromise = fetch(`${baseUrl}/api/analytics/track`, {
+      // Fire and forget — no waitUntil in middleware
+      fetch(`${baseUrl}/api/analytics/track`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ storeSlug }),
       }).catch(() => {});
-      
-      if ((request as any).waitUntil) {
-        (request as any).waitUntil(trackPromise);
-      }
     }
   }
 
