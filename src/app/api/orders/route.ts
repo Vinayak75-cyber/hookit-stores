@@ -124,6 +124,21 @@ async function updateAnalytics(supabase: any, storeId: string, orderAmount: numb
   }
 }
 
+// ====== INVENTORY DECREMENT ======
+
+async function decrementInventory(supabase: any, orderItems: z.infer<typeof OrderItemSchema>[]) {
+  for (const item of orderItems) {
+    const { error } = await supabase.rpc("decrement_product_stock", {
+      p_product_id: item.product_id,
+      p_quantity: item.quantity,
+    });
+
+    if (error) {
+      console.error("Failed to decrement inventory for product", item.product_id, error);
+    }
+  }
+}
+
 // ====== GET — Fetch orders ======
 
 export async function GET(request: NextRequest) {
@@ -221,6 +236,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
+    // 1.5. Validate inventory availability
+    for (const item of body.order_items) {
+      const { data: product } = await supabase
+        .from("products")
+        .select("id, name, stock, inventory_quantity, track_inventory, continue_selling")
+        .eq("id", item.product_id)
+        .single();
+
+      if (!product) {
+        return NextResponse.json(
+          { error: `Product not found: ${item.product_name}` },
+          { status: 404 }
+        );
+      }
+
+      const availableStock = product.stock ?? product.inventory_quantity ?? 0;
+
+      if (product.track_inventory && !product.continue_selling && availableStock < item.quantity) {
+        return NextResponse.json(
+          { error: `Insufficient stock for "${product.name}". Only ${availableStock} available.` },
+          { status: 400 }
+        );
+      }
+    }
+
     // 2. Get payment settings
     const { data: paymentSettings } = await supabase
       .from("payment_settings")
@@ -316,6 +356,9 @@ export async function POST(request: NextRequest) {
     if (itemsError) {
       console.error("Order items insert error:", itemsError);
     }
+
+    // 6.5. Decrement product inventory
+    await decrementInventory(supabase, body.order_items);
 
     // 7. Update analytics
     await updateAnalytics(supabase, body.store_id, body.total_amount);

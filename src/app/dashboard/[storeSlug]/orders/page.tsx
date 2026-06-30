@@ -226,14 +226,16 @@ export default async function OrdersPage({
                         Order #{order.id.slice(0, 8).toUpperCase()}
                       </p>
                       <p className="text-xs text-[#999999]">
-                        {new Date(order.created_at).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+  {new Date(order.created_at).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  })}
+</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 sm:gap-3 sm:justify-end">

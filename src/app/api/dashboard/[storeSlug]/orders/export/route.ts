@@ -53,6 +53,12 @@ export async function GET(
     return NextResponse.json({ error: "Store not found" }, { status: 404 });
   }
 
+  // Calculate inclusive date range (from midnight to end of day)
+  // Add 1 day to 'to' for exclusive upper bound to include the full 'to' day
+  const toDate = new Date(to);
+  toDate.setDate(toDate.getDate() + 1);
+  const toExclusive = toDate.toISOString().split("T")[0];
+
   // Fetch orders within date range
   const { data: orders, error: ordersError } = await supabase
     .from("orders")
@@ -67,8 +73,8 @@ export async function GET(
       )
     `)
     .eq("store_id", store.id)
-    .gte("created_at", `${from}T00:00:00.000Z`)
-    .lte("created_at", `${to}T23:59:59.999Z`)
+    .gte("created_at", from)
+    .lt("created_at", toExclusive)
     .order("created_at", { ascending: false });
 
   if (ordersError) {

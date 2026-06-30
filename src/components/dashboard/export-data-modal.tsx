@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, X, Calendar, ChevronDown } from "lucide-react";
+import { Download, X, Calendar } from "lucide-react";
 
 interface ExportDataModalProps {
   storeSlug: string;
@@ -22,17 +22,22 @@ export function ExportDataModal({ storeSlug }: ExportDataModalProps) {
     const now = new Date();
 
     if (rangeType === "current") {
-      from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
-      to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      from = `${y}-${String(m + 1).padStart(2, "0")}-01`;
+      to = `${y}-${String(m + 1).padStart(2, "0")}-${String(new Date(y, m + 1, 0).getDate()).padStart(2, "0")}`;
     } else if (rangeType === "last") {
-      from = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split("T")[0];
-      to = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split("T")[0];
+      const y = now.getFullYear();
+      const m = now.getMonth() - 1;
+      const lastMonth = m < 0 ? 11 : m;
+      const lastYear = m < 0 ? y - 1 : y;
+      from = `${lastYear}-${String(lastMonth + 1).padStart(2, "0")}-01`;
+      to = `${lastYear}-${String(lastMonth + 1).padStart(2, "0")}-${String(new Date(lastYear, lastMonth + 1, 0).getDate()).padStart(2, "0")}`;
     } else {
       from = customFrom;
       to = customTo;
     }
 
-    // Open the export page in a new tab
     const url = `/dashboard/${storeSlug}/orders/export?from=${from}&to=${to}`;
     window.open(url, "_blank");
 
@@ -42,7 +47,6 @@ export function ExportDataModal({ storeSlug }: ExportDataModalProps) {
 
   return (
     <>
-      {/* Export Button */}
       <button
         onClick={() => setIsOpen(true)}
         className="flex items-center gap-2 border border-[#e5e5e5] rounded-xl px-4 py-2.5 text-sm text-[#666666] hover:border-[#1a1a1a] hover:text-[#1a1a1a] transition-colors"
@@ -51,11 +55,9 @@ export function ExportDataModal({ storeSlug }: ExportDataModalProps) {
         Export Data
       </button>
 
-      {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#e5e5e5]">
               <h2 className="text-lg font-semibold text-[#1a1a1a]">Export Orders</h2>
               <button
@@ -66,13 +68,11 @@ export function ExportDataModal({ storeSlug }: ExportDataModalProps) {
               </button>
             </div>
 
-            {/* Body */}
             <div className="p-6 space-y-4">
               <p className="text-sm text-[#888888]">
                 Choose a date range to export your orders report.
               </p>
 
-              {/* Range Options */}
               <div className="space-y-2">
                 <button
                   onClick={() => setRangeType("current")}
@@ -111,7 +111,6 @@ export function ExportDataModal({ storeSlug }: ExportDataModalProps) {
                 </button>
               </div>
 
-              {/* Custom Date Inputs */}
               {rangeType === "custom" && (
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <div>
@@ -140,7 +139,6 @@ export function ExportDataModal({ storeSlug }: ExportDataModalProps) {
               )}
             </div>
 
-            {/* Footer */}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#e5e5e5] bg-[#fafafa]">
               <button
                 onClick={() => setIsOpen(false)}
