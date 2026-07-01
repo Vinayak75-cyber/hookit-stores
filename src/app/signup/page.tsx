@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ShoppingBag } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, ShoppingBag, CheckCircle } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showConfirmation, setShowConfirmation] = useState(false); // ← ADD THIS
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +44,8 @@ export default function SignupPage() {
         data: {
           full_name: name,
         },
+        // ← ADD THIS: Set where to redirect after email confirmation
+        emailRedirectTo: `${window.location.origin}/login`,
       },
     });
 
@@ -53,9 +56,8 @@ export default function SignupPage() {
       return;
     }
 
-    // Profile is auto-created by the trigger — no manual insert needed
-    router.push("/login");
-    router.refresh();
+    // ← REPLACE router.push("/login") with this:
+    setShowConfirmation(true);
   };
 
   const handleGoogleSignup = async () => {
@@ -74,6 +76,69 @@ export default function SignupPage() {
       setError(oauthError.message);
     }
   };
+
+  // ← ADD THIS: Show confirmation screen
+  if (showConfirmation) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="flex items-center justify-center gap-2 mb-10">
+            <ShoppingBag className="w-8 h-8 text-white" />
+            <span className="text-3xl font-bold text-white tracking-tight">hookit</span>
+          </div>
+
+          <div className="bg-[#111111] border border-[#222222] rounded-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-green-950/30 border border-green-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-8 h-8 text-green-400" />
+            </div>
+            
+            <h1 className="text-2xl font-semibold text-white mb-3">
+              Check your email
+            </h1>
+            <p className="text-[#888888] text-sm mb-2">
+              We&apos;ve sent a confirmation link to
+            </p>
+            <p className="text-white font-medium text-sm mb-6">{email}</p>
+            
+            <p className="text-[#666666] text-sm mb-8">
+              Click the link in the email to verify your account. Once confirmed, you can sign in.
+            </p>
+
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center gap-2 w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-[#e8e8e8] transition-colors"
+            >
+              Go to login
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+
+            <div className="mt-6 pt-6 border-t border-[#222222]">
+              <p className="text-[#555555] text-xs">
+                Didn&apos;t receive the email?{" "}
+                <button
+                  onClick={async () => {
+                    await supabase.auth.resend({
+                      type: "signup",
+                      email,
+                    });
+                  }}
+                  className="text-[#888888] hover:text-white transition-colors underline"
+                >
+                  Resend
+                </button>
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center mt-6">
+            <Link href="/" className="text-[#555555] text-sm hover:text-white transition-colors">
+              ← Back to home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center px-4">
