@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import CopyButton from "@/components/CopyButton";
 import Link from "next/link";
 import {
   DollarSign,
@@ -182,11 +183,23 @@ export default async function DashboardOverviewPage({
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Header - Desktop */}
-      <div className="hidden lg:flex items-center justify-between pt-2">
+      <div className="hidden lg:flex items-start justify-between pt-2">
         <div>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">{store.name}</h1>
-          <p className="text-[#888888] text-sm mt-1">
-            {storeSlug}.hookit.online
+          <div className="flex items-center gap-2 mt-1.5">
+            <Link
+              href={`https://${storeSlug}.hookit.online`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#888888] text-sm hover:text-[#1a1a1a] transition-colors flex items-center gap-1.5 group"
+            >
+              {storeSlug}.hookit.online
+              <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </Link>
+            <CopyButton text={`https://${storeSlug}.hookit.online`} />
+          </div>
+          <p className="text-[#aaaaaa] text-xs mt-2">
+            Copy this link and share it on your social media, WhatsApp status, or anywhere your customers can find you.
           </p>
         </div>
         <Link
@@ -199,16 +212,36 @@ export default async function DashboardOverviewPage({
         </Link>
       </div>
 
-      {/* Mobile View Store Button */}
-      <div className="lg:hidden pt-5">
-        <Link
-          href={`/${storeSlug}`}
-          target="_blank"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-[#e5e5e5] rounded-xl text-sm font-medium text-[#1a1a1a] hover:border-[#1a1a1a] transition-all"
-        >
-          <ExternalLink className="w-4 h-4" />
-          View store
-        </Link>
+      {/* Mobile Header */}
+      <div className="lg:hidden pt-5 space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl font-bold text-[#1a1a1a]">{store.name}</h1>
+            <div className="flex items-center gap-2 mt-1">
+              <Link
+                href={`https://${storeSlug}.hookit.online`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#888888] text-sm hover:text-[#1a1a1a] transition-colors flex items-center gap-1 group truncate"
+              >
+                {storeSlug}.hookit.online
+                <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              </Link>
+              <CopyButton text={`https://${storeSlug}.hookit.online`} />
+            </div>
+            <p className="text-[#aaaaaa] text-xs mt-1.5">
+              Copy this link and share it on your social media, WhatsApp status, or anywhere your customers can find you.
+            </p>
+          </div>
+          <Link
+            href={`/${storeSlug}`}
+            target="_blank"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-[#e5e5e5] rounded-xl text-sm font-medium text-[#1a1a1a] hover:border-[#1a1a1a] transition-all shrink-0 ml-3"
+          >
+            <ExternalLink className="w-4 h-4" />
+            View
+          </Link>
+        </div>
       </div>
 
       {/* Stats Grid */}
