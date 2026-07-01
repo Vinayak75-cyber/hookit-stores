@@ -3,6 +3,7 @@
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getCsrfToken } from "@/lib/csrf";
 import { createClient } from "@/lib/supabase";
 import {
   ArrowLeft,
@@ -209,16 +210,20 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
     return match ? match[2] : '';
   };
 
-  const uploadImage = async (file: File, type: "logo" | "banner"): Promise<string> => {
-    const fileName = `${storeSlug}/${type}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.webp`;
+    const uploadImage = async (file: File, type: "logo" | "banner"): Promise<string> => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("type", type);  // "logo" or "banner"
+    formData.append("type", type);
+
+    const token = getCsrfToken();
+    if (!token) {
+      throw new Error("CSRF token not found. Please refresh the page.");
+    }
 
     const res = await fetch("/api/upload", {
       method: "POST",
       headers: {
-        "X-CSRF-Token": getCsrfToken(),
+        "X-CSRF-Token": token,
       },
       body: formData,
     });
@@ -312,8 +317,16 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
   setError("");
 
   try {
+    const token = getCsrfToken(); // Uses imported function from @/lib/csrf
+    if (!token) {
+      throw new Error("CSRF token not found. Please refresh the page.");
+    }
+
     const res = await fetch(`/api/stores/${storeSlug}/delete`, {
       method: "DELETE",
+      headers: {
+        "X-CSRF-Token": token,
+      },
     });
 
     if (!res.ok) {
@@ -321,7 +334,6 @@ export default function StoreSettingsPage({ params }: { params: Promise<{ storeS
       throw new Error(data.error || "Failed to delete store");
     }
 
-    // Redirect to dashboard after deletion
     router.push("/dashboard");
   } catch (err: any) {
     setError(err.message || "Failed to delete store");

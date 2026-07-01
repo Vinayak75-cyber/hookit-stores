@@ -107,11 +107,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // 🔒 CSRF: Generate/set CSRF token cookie if not present
-  const existingCsrf = request.cookies.get("csrf_token")?.value;
-  if (!existingCsrf) {
-    const csrfToken = generateCsrfToken();
-    setCsrfCookie(response, csrfToken);
+    // 🔒 CSRF: Always ensure a valid CSRF token cookie exists
+  let csrfToken = request.cookies.get("csrf_token")?.value;
+  if (!csrfToken) {
+    csrfToken = generateCsrfToken();
   }
+  setCsrfCookie(response, csrfToken);
 
     // 🔒 SECURITY HEADERS (skip for API routes)
   if (!pathname.startsWith("/api/")) {
